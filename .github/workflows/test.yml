@@ -18,7 +18,7 @@ jobs:
           restore-keys: arch-pkgs
 
       - name: Update system and install dependencies
-        run: pacman -Syu --noconfirm --noprogressbar --needed dbus python-jeepney python-pytest mypy flake8
+        run: pacman -Syu --noconfirm --noprogressbar --needed dbus python-jeepney python-pytest python-pytest-cov mypy flake8
 
       - uses: actions/checkout@v2
 
@@ -31,4 +31,8 @@ jobs:
       - name: Run tests
         run: |
           eval $(dbus-launch --sh-syntax)
-          pytest -v
+          pytest -v --cov --cov-report=xml
+
+      - uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
