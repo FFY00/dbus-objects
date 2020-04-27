@@ -9,8 +9,11 @@ def test_call(handlers):
     assert handlers['ExampleMethod']() == ('s', ('test',))
 
 
-def test_is_dbus_method(obj):
+def test_dbus_method(obj):
     assert obj.example_method.is_dbus_method
+    assert obj.example_method.dbus_method_name
+    assert obj.example_method.dbus_direction
+    assert obj.example_method.dbus_signature
 
 
 def test_dbus_method_error():
