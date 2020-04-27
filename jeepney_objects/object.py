@@ -2,7 +2,6 @@
 
 import inspect
 import functools
-import typing
 
 from typing import Any, Callable, Dict, Optional, Tuple
 
@@ -30,17 +29,21 @@ def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], Ca
 
             return func(*args, **kwargs)
 
-        types = typing.get_type_hints(func)
+        sig = inspect.signature(func)
+        ret = sig.return_annotation if sig.return_annotation != sig.empty else None
+        args = sig.parameters.copy()  # type: ignore
+        if args:
+            args.popitem(last=False)
 
         wrapper.is_dbus_method = True  # type: ignore
 
-        if types.get('return'):
-            if len(inspect.signature(func).parameters) > 1:
+        if ret and ret is not type(None):  # noqa: E721
+            if len(args) > 0:
                 raise DBusObjectException('Invalid method - a DBus method can\'t receive *and* return parameters, '
                                           'only one is allowed')
 
             wrapper.dbus_direction = 'out'  # type: ignore
-            wrapper.dbus_signature = jeepney_objects.util.dbus_signature(types['return'])  # type: ignore
+            wrapper.dbus_signature = jeepney_objects.util.dbus_signature(ret)  # type: ignore
         else:
             wrapper.dbus_direction = 'in'  # type: ignore
 
