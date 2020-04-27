@@ -1,0 +1,36 @@
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux
+    steps:
+      - name: Get date
+        id: date
+        run: echo "::set-output name=date::$(date +%F)"
+
+      - name: Cache
+        uses: actions/cache@v1
+        with:
+          path: /var/cache/pacman/pkg
+          key: arch-pkgs-${{ steps.date.outputs.date }}
+          restore-keys: arch-pkgs
+
+      - name: Update system and install dependencies
+        run: pacman -Syu --noconfirm --noprogressbar --needed base-devel python-sphinx python-sphinx-autodoc-typehints python-pallets-sphinx-themes python-recommonmark git rsync
+
+      - uses: actions/checkout@v2
+
+      - name: Build documentation
+        run: |
+          cd docs
+          make
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@releases/v3
+        with:
+          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: docs/build/html
+
