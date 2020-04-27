@@ -6,6 +6,17 @@ jobs:
     container:
       image: archlinux
     steps:
+      - name: Get date
+        id: date
+        run: echo "::set-output name=date::$(date +%F)"
+
+      - name: Cache
+        uses: actions/cache@v1
+        with:
+          path: /var/cache/pacman/pkg
+          key: arch-pkgs-${{ steps.date.outputs.date }}
+          restore-keys: arch-pkgs
+
       - name: Update system and install dependencies
         run: pacman -Syu --noconfirm --noprogressbar --needed dbus python-jeepney python-pytest mypy flake8
 
