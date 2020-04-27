@@ -1,0 +1,23 @@
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux
+    steps:
+      - name: Update system and install dependencies
+        run: pacman -Syu --noconfirm --noprogressbar --needed dbus python-jeepney python-pytest mypy flake8
+
+      - uses: actions/checkout@v2
+
+      - name: Static analysis with mypy
+        run: mypy --ignore-missing-imports --strict -p jeepney_objects
+
+      - name: Lint with flake8
+        run: flake8 . --count --show-source --statistics
+
+      - name: Run tests
+        run: |
+          eval $(dbus-launch --sh-syntax)
+          pytest -v
