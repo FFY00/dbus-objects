@@ -2,7 +2,7 @@
 
 import pytest
 
-from jeepney_objects.object import DBusObjectException, dbus_method
+from jeepney_objects.object import DBusObject, DBusObjectException, dbus_method
 
 
 def test_dbus_object(obj):
@@ -20,6 +20,14 @@ def test_dbus_method(obj):
 
 def test_call(handlers):
     assert handlers['ExampleMethod']() == ('s', ('test',))
+
+
+@pytest.mark.xfail(strict=True, raises=DBusObjectException)
+def test_inout_method_error():
+    class BadObject(DBusObject):
+        @dbus_method()
+        def inout_method(self, arg: int) -> int:
+            return arg  # pragma: no cover
 
 
 def test_dbus_method_error():

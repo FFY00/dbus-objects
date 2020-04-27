@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 
+import inspect
 import functools
 import typing
 
@@ -34,6 +35,10 @@ def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], Ca
         wrapper.is_dbus_method = True  # type: ignore
 
         if types.get('return'):
+            if len(inspect.signature(func).parameters) > 1:
+                raise DBusObjectException('Invalid method - a DBus method can\'t receive *and* return parameters, '
+                                          'only one is allowed')
+
             wrapper.dbus_direction = 'out'  # type: ignore
             wrapper.dbus_signature = jeepney_objects.util.dbus_signature(types['return'])  # type: ignore
         else:
