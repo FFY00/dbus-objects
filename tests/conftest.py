@@ -2,6 +2,7 @@
 
 import pytest
 
+from jeepney_objects.integration.blocking import DBusServer
 from jeepney_objects.object import DBusObject, dbus_method
 
 
@@ -22,3 +23,12 @@ def obj():
 @pytest.fixture(scope='session')
 def handlers(obj):
     return obj.get_dbus_handlers()
+
+
+@pytest.fixture(params=['SESSION'])
+def server(request):
+    server = DBusServer(request.param, 'com.example.object')
+
+    yield server
+
+    server.close()
