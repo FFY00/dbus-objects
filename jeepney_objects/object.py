@@ -49,6 +49,15 @@ def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], Ca
 
 
 class DBusObject():
+    def __init__(self, interface_name: Optional[str] = None):
+        self.is_dbus_object = True
+        self._dbus_interface_name = jeepney_objects.util.dbus_case(type(self).__name__
+                                                                   if not interface_name else interface_name)
+
+    @property
+    def dbus_interface_name(self) -> str:
+        return self._dbus_interface_name
+
     def get_dbus_handlers(self) -> Dict[str, Callable[..., Any]]:
         '''
         Returns a dictionary of the DBus method handlers
