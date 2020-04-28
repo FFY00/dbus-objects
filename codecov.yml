@@ -1,0 +1,8 @@
+tatus:
+    project:
+      default:
+        target: 95%
+        threshold: 5%
+        base: auto
+        paths:
+          - 'jeepney_objects'
