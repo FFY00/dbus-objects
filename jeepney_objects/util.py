@@ -1,11 +1,15 @@
 # SPDX-License-Identifier: MIT
 
+import inspect
 import typing
 
-from typing import List
+from typing import Any, Callable, Generator, List, Tuple
 
 import jeepney_objects.object
 import jeepney_objects.types
+
+if typing.TYPE_CHECKING:  # pragma: no cover
+    import collections
 
 
 def dbus_case(text: str) -> str:
@@ -70,3 +74,38 @@ def dbus_signature_from_list(args: List[type]) -> str:
     :param args:
     '''
     return ''.join(dbus_signature(arg) for arg in args)
+
+
+def _sig_parameters(args: 'collections.OrderedDict[str, inspect.Parameter]') -> Generator[type, type, None]:
+    while args:
+        key, value = args.popitem(last=False)
+        if value.annotation is value.empty:
+            raise jeepney_objects.object.DBusObjectException(f'Argument \'{key}\' is missing a type annotation')
+        yield value.annotation
+
+
+def get_dbus_signature(func: Callable[..., Any]) -> Tuple[str, str]:
+    '''
+    Gets the DBus signature from a function
+
+    :param func: target function
+    :returns:
+        - direction
+        - signature
+    '''
+    sig = inspect.signature(func)
+    ret = sig.return_annotation if sig.return_annotation != sig.empty else None
+    args = sig.parameters.copy()  # type: ignore
+    if args:
+        args.popitem(last=False)
+
+    args = list(_sig_parameters(args))
+
+    if ret and ret is not type(None):  # noqa: E721
+        if len(args) > 0:
+            raise jeepney_objects.object.DBusObjectException('Invalid method - a DBus method can\'t receive *and* return '
+                                                             'parameters, only one is allowed')
+
+        return 'out', dbus_signature(ret)
+    else:
+        return 'in', dbus_signature_from_list(args)

@@ -1,23 +1,10 @@
 # SPDX-License-Identifier: MIT
 
-import inspect
 import functools
-import typing
 
-from typing import Any, Callable, Dict, Generator, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import jeepney_objects.util
-
-if typing.TYPE_CHECKING:  # pragma: no cover
-    import collections
-
-
-def _sig_parameters(args: 'collections.OrderedDict[str, inspect.Parameter]') -> Generator[type, type, None]:
-    while args:
-        key, value = args.popitem(last=False)
-        if value.annotation is value.empty:
-            raise jeepney_objects.object.DBusObjectException(f'Argument \'{key}\' is missing a type annotation''')
-        yield value.annotation
 
 
 def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
@@ -41,26 +28,8 @@ def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], Ca
 
             return func(*args, **kwargs)
 
-        sig = inspect.signature(func)
-        ret = sig.return_annotation if sig.return_annotation != sig.empty else None
-        args = sig.parameters.copy()  # type: ignore
-        if args:
-            args.popitem(last=False)
-
-        args = list(_sig_parameters(args))
-
         wrapper.is_dbus_method = True  # type: ignore
-
-        if ret and ret is not type(None):  # noqa: E721
-            if len(args) > 0:
-                raise DBusObjectException('Invalid method - a DBus method can\'t receive *and* return parameters, '
-                                          'only one is allowed')
-
-            wrapper.dbus_direction = 'out'  # type: ignore
-            wrapper.dbus_signature = jeepney_objects.util.dbus_signature(ret)  # type: ignore
-        else:
-            wrapper.dbus_direction = 'in'  # type: ignore
-            wrapper.dbus_signature = jeepney_objects.util.dbus_signature_from_list(args)  # type: ignore
+        wrapper.dbus_direction, wrapper.dbus_signature = jeepney_objects.util.get_dbus_signature(func)  # type: ignore
 
         method_name = name
         if not method_name:
