@@ -31,14 +31,13 @@ def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], ou
 
 
 class DBusObject():
-    def __init__(self, interface_name: Optional[str] = None):
+    def __init__(self, name: Optional[str] = None):
         self.is_dbus_object = True
-        self._dbus_interface_name = jeepney_objects.util.dbus_case(type(self).__name__
-                                                                   if not interface_name else interface_name)
+        self._dbus_name = jeepney_objects.util.dbus_case(type(self).__name__ if not name else name)
 
     @property
-    def dbus_interface_name(self) -> str:
-        return self._dbus_interface_name
+    def dbus_name(self) -> str:
+        return self._dbus_name
 
     def get_dbus_handlers(self) -> Dict[str, our_types.DBusMethod]:
         '''

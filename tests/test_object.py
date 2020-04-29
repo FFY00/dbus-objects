@@ -3,7 +3,7 @@
 
 def test_dbus_object(obj):
     assert obj.is_dbus_object
-    assert obj.dbus_interface_name == 'ExampleObject'
+    assert obj.dbus_name == 'ExampleObject'
     assert 'ExampleMethod' in obj.get_dbus_handlers()
 
 
