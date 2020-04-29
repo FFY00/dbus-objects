@@ -91,8 +91,8 @@ def get_dbus_signature(func: Callable[..., Any], ignore_first: bool = True) -> T
     :param func: target function
     :param ingore_first: ignores first argument
     :returns:
-        - direction
-        - signature
+        - input_signature
+        - output_signature
     '''
     sig = inspect.signature(func)
     ret = sig.return_annotation if sig.return_annotation != sig.empty else None
@@ -102,13 +102,7 @@ def get_dbus_signature(func: Callable[..., Any], ignore_first: bool = True) -> T
 
     args = list(_sig_parameters(args))
 
-    if ret and ret is not type(None):  # noqa: E721
-        if len(args) > 0:
-            raise jeepney_objects.object.DBusObjectException('Invalid method - a DBus method can\'t receive *and* return '
-                                                             'parameters, only one is allowed')
-
-        return 'out', dbus_signature(ret)
-    elif len(args) > 0:
-        return 'in', dbus_signature_from_list(args)
-    else:
-        raise jeepney_objects.object.DBusObjectException(f'DBus method \'{func}\' is missing type annotations')
+    return (
+        dbus_signature_from_list(args) if args else '',
+        dbus_signature(ret) if ret else ''
+    )

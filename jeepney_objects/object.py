@@ -1,19 +1,22 @@
 # SPDX-License-Identifier: MIT
 
 import functools
+import typing
 
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional
 
+import jeepney_objects.types as our_types
 import jeepney_objects.util
 
 
-def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], our_types.DBusMethod]:
     '''
     Exports a function as a DBus method
 
     The direction will be detected automatically based on the type hints
     '''
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+
+    def decorator(func: Callable[..., Any]) -> our_types.DBusMethod:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             '''
@@ -28,15 +31,17 @@ def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], Ca
 
             return func(*args, **kwargs)
 
-        wrapper.is_dbus_method = True  # type: ignore
-        wrapper.dbus_direction, wrapper.dbus_signature = jeepney_objects.util.get_dbus_signature(func)  # type: ignore
-
         method_name = name
         if not method_name:
             method_name = func.__name__
-        wrapper.dbus_method_name = jeepney_objects.util.dbus_case(method_name)  # type: ignore
 
-        return wrapper
+        dbus_method_wrapper = typing.cast(our_types.DBusMethod, wrapper)
+
+        dbus_method_wrapper.is_dbus_method = True
+        dbus_method_wrapper.dbus_signature = jeepney_objects.util.get_dbus_signature(func)
+        dbus_method_wrapper.dbus_method_name = jeepney_objects.util.dbus_case(method_name)
+
+        return dbus_method_wrapper
     return decorator
 
 
@@ -50,21 +55,16 @@ class DBusObject():
     def dbus_interface_name(self) -> str:
         return self._dbus_interface_name
 
-    def get_dbus_handlers(self) -> Dict[str, Callable[..., Any]]:
+    def get_dbus_handlers(self) -> Dict[str, our_types.DBusMethod]:
         '''
         Returns a dictionary of the DBus method handlers
         '''
-        def generate_handler(method: Callable[..., Any]) -> Callable[..., Any]:
-            def handler(*args: Any, **kwargs: Any) -> Tuple[str, Tuple[Any]]:
-                return (method.dbus_signature, (method(*args, **kwargs),))  # type: ignore
-            return handler
-
         handlers = {}
 
         for attr in dir(self):
             obj = getattr(self, attr)
             if getattr(obj, 'is_dbus_method', False):
-                handlers[obj.dbus_method_name] = generate_handler(obj)
+                handlers[obj.dbus_method_name] = obj
 
         return handlers
 

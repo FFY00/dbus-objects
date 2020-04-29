@@ -60,12 +60,19 @@ def test_dbus_case():
     assert dbus_case('a_b_c') == 'ABC'
 
 
-def test_get_dbus_sigature_empty():
-    def method():
+def test_get_dbus_signature():
+    def method1(arg: typing.Dict[str, typing.Dict[str, str]]):
         pass  # pragma: no cover
 
-    with pytest.raises(DBusObjectException):
-        get_dbus_signature(method, ignore_first=False)
+    def method2() -> typing.List[typing.List[DBusObject]]:
+        pass  # pragma: no cover
+
+    def method3(arg: typing.Dict[int, str]) -> typing.Dict[int, str]:
+        pass  # pragma: no cover
+
+    assert get_dbus_signature(method1, ignore_first=False) == ('a{sa{ss}}', '')
+    assert get_dbus_signature(method2, ignore_first=False) == ('', 'aao')
+    assert get_dbus_signature(method3, ignore_first=False) == ('a{is}', 'a{is}')
 
 
 def test_get_dbus_sigature_no_annotations():

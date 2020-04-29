@@ -11,3 +11,10 @@ Int16 = typing.TypeVar('Int16', int, int)
 Int32 = typing.TypeVar('Int32', int, int)
 Int64 = typing.TypeVar('Int64', int, int)
 Signature = typing.TypeVar('Signature', str, bytes)
+
+
+class DBusMethod(typing.Protocol):
+    is_dbus_method: typing.Literal[True]
+    dbus_method_name: str
+    dbus_signature: typing.Tuple[str, str]
+    __call__: typing.Callable[..., typing.Tuple[str, typing.Tuple[typing.Any]]]
