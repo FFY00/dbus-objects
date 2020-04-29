@@ -68,7 +68,6 @@ html_context = {
     'project_links': [
         ProjectLink('Source Code', 'https://github.com/libratbag/ratbag-emu/'),
         ProjectLink('Issue Tracker', 'https://github.com/libratbag/ratbag-emu/issues/'),
-        ProjectLink('libratbag project', 'https://github.com/libratbag/libratbag'),
     ]
 }
 html_sidebars = {
