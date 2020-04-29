@@ -1,9 +1,5 @@
 # SPDX-License-Identifier: MIT
 
-import pytest
-
-from jeepney_objects.object import DBusObjectException, dbus_method
-
 
 def test_dbus_object(obj):
     assert obj.is_dbus_object
@@ -23,12 +19,3 @@ def test_call(handlers):
 
 def test_signature(handlers):
     assert handlers['ExampleMethod'].dbus_signature == ('', 's')
-
-
-def test_dbus_method_error():
-    @dbus_method()
-    def method() -> str:
-        pass  # pragma: no cover
-
-    with pytest.raises(DBusObjectException):
-        method()

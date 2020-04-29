@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: MIT
 
-import functools
 import typing
 
 from typing import Any, Callable, Dict, Optional
@@ -17,31 +16,17 @@ def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], ou
     '''
 
     def decorator(func: Callable[..., Any]) -> our_types.DBusMethod:
-        @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            '''
-            DBus function wrapper
-
-            Will make sure the function is not called when defined outside
-            DBusObject
-            '''
-            owner = args[0] if len(args) else None
-            if not isinstance(owner, DBusObject):
-                raise DBusObjectException('Tried to use a DBus method outside DBusObject')
-
-            return func(*args, **kwargs)
-
         method_name = name
         if not method_name:
             method_name = func.__name__
 
-        dbus_method_wrapper = typing.cast(our_types.DBusMethod, wrapper)
+        dbus_method_func = typing.cast(our_types.DBusMethod, func)
 
-        dbus_method_wrapper.is_dbus_method = True
-        dbus_method_wrapper.dbus_signature = jeepney_objects.util.get_dbus_signature(func)
-        dbus_method_wrapper.dbus_method_name = jeepney_objects.util.dbus_case(method_name)
+        dbus_method_func.is_dbus_method = True
+        dbus_method_func.dbus_signature = jeepney_objects.util.get_dbus_signature(func)
+        dbus_method_func.dbus_method_name = jeepney_objects.util.dbus_case(method_name)
 
-        return dbus_method_wrapper
+        return dbus_method_func
     return decorator
 
 
