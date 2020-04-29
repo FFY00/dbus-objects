@@ -23,7 +23,8 @@ jobs:
       - name: Update system and install dependencies
         run: pacman -Syu --noconfirm --noprogressbar --needed base-devel python-sphinx python-sphinx-autodoc-typehints python-pallets-sphinx-themes python-recommonmark git rsync
 
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
 
       - name: Build documentation
         run: |
