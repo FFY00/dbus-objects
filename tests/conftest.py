@@ -14,6 +14,14 @@ class ExampleObject(DBusObject):
     def normal_method(self):
         pass  # pragma: no cover
 
+    @dbus_method()
+    def ping(self) -> str:
+        return 'Pong!'  # pragma: no cover
+
+    @dbus_method()
+    def print(self, msg: str) -> None:
+        print(msg)  # pragma: no cover
+
 
 @pytest.fixture(scope='session')
 def obj():
