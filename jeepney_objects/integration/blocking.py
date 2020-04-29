@@ -15,14 +15,14 @@ class DBusServer():
         self._conn.router.on_unhandled = self._handle_msg
 
     def __del__(self) -> None:
-        self.close()
+        self.close()  # pragma: no cover
 
     @property
     def name(self) -> str:
         return self._name
 
     def _handle_msg(self) -> None:
-        pass
+        pass  # pragma: no cover
 
     def close(self) -> None:
         self._conn.close()
