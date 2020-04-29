@@ -32,7 +32,7 @@ def test_inout_method_error():
 
 def test_dbus_method_error():
     @dbus_method()
-    def method():
+    def method() -> str:
         pass  # pragma: no cover
 
     with pytest.raises(DBusObjectException):

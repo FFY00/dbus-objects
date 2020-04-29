@@ -84,11 +84,12 @@ def _sig_parameters(args: 'collections.OrderedDict[str, inspect.Parameter]') -> 
         yield value.annotation
 
 
-def get_dbus_signature(func: Callable[..., Any]) -> Tuple[str, str]:
+def get_dbus_signature(func: Callable[..., Any], ignore_first: bool = True) -> Tuple[str, str]:
     '''
     Gets the DBus signature from a function
 
     :param func: target function
+    :param ingore_first: ignores first argument
     :returns:
         - direction
         - signature
@@ -96,7 +97,7 @@ def get_dbus_signature(func: Callable[..., Any]) -> Tuple[str, str]:
     sig = inspect.signature(func)
     ret = sig.return_annotation if sig.return_annotation != sig.empty else None
     args = sig.parameters.copy()  # type: ignore
-    if args:
+    if ignore_first and args:
         args.popitem(last=False)
 
     args = list(_sig_parameters(args))
@@ -107,5 +108,7 @@ def get_dbus_signature(func: Callable[..., Any]) -> Tuple[str, str]:
                                                              'parameters, only one is allowed')
 
         return 'out', dbus_signature(ret)
-    else:
+    elif len(args) > 0:
         return 'in', dbus_signature_from_list(args)
+    else:
+        raise jeepney_objects.object.DBusObjectException(f'DBus method \'{func}\' is missing type annotations')

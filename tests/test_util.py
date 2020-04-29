@@ -7,7 +7,7 @@ import pytest
 import jeepney_objects.types
 
 from jeepney_objects.object import DBusObjectException
-from jeepney_objects.util import dbus_case, dbus_signature, dbus_signature_from_list
+from jeepney_objects.util import get_dbus_signature, dbus_case, dbus_signature, dbus_signature_from_list
 
 
 def test_signature():
@@ -56,3 +56,19 @@ def test_dbus_case():
     assert dbus_case('_oh__oh__oh_no') == 'OhOhOhNo'
     assert dbus_case('hello1') == 'Hello1'
     assert dbus_case('a_b_c') == 'ABC'
+
+
+def test_get_dbus_sigature_empty():
+    def method():
+        pass  # pragma: no cover
+
+    with pytest.raises(DBusObjectException):
+        get_dbus_signature(method, ignore_first=False)
+
+
+def test_get_dbus_sigature_no_annotations():
+    def method(arg):
+        pass  # pragma: no cover
+
+    with pytest.raises(DBusObjectException):
+        get_dbus_signature(method, ignore_first=False)
