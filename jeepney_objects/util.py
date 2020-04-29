@@ -61,7 +61,7 @@ def dbus_signature(typ: type) -> str:  # noqa: C901
         return 'n'
     elif cls is jeepney_objects.types.Int64:
         return 'x'
-    elif isinstance(typ, jeepney_objects.object.DBusObject):
+    elif cls is jeepney_objects.object.DBusObject:
         return 'o'
 
     raise jeepney_objects.object.DBusObjectException(f'Can\'t convert \'{typ}\' to a DBus signature')

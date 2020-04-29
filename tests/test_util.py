@@ -6,7 +6,7 @@ import pytest
 
 import jeepney_objects.types
 
-from jeepney_objects.object import DBusObjectException
+from jeepney_objects.object import DBusObject, DBusObjectException
 from jeepney_objects.util import get_dbus_signature, dbus_case, dbus_signature, dbus_signature_from_list
 
 
@@ -21,11 +21,13 @@ def test_signature():
     assert dbus_signature(jeepney_objects.types.Int16) == 'n'
     assert dbus_signature(jeepney_objects.types.Int32) == 'i'
     assert dbus_signature(jeepney_objects.types.Int64) == 'x'
+    assert dbus_signature(DBusObject) == 'o'
     assert dbus_signature(typing.List[int]) == 'ai'
     assert dbus_signature(typing.Dict[str, int]) == 'a{si}'
     assert dbus_signature(typing.Tuple[str, int]) == '(si)'
     assert dbus_signature(typing.List[typing.Tuple[int, int]]) == 'a(ii)'
     assert dbus_signature(typing.List[typing.List[int]]) == 'aai'
+    assert dbus_signature(typing.List[typing.List[DBusObject]]) == 'aao'
     assert dbus_signature(typing.Tuple[int, typing.Tuple[int, int]]) == '(i(ii))'
     assert dbus_signature(typing.Dict[str, str]) == 'a{ss}'
     assert dbus_signature(typing.Dict[int, str]) == 'a{is}'
