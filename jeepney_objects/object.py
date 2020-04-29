@@ -12,7 +12,13 @@ def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], ou
     '''
     Exports a function as a DBus method
 
-    The direction will be detected automatically based on the type hints
+    The function must have type annotations, they will be used to resolve the
+    method sigature.
+
+    The function name will be used as the DBus method name unless otherwise
+    specified in the arguments.
+
+    :param name: DBus method name
     '''
 
     def decorator(func: Callable[..., Any]) -> our_types.DBusMethod:
@@ -31,7 +37,19 @@ def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], ou
 
 
 class DBusObject():
+    '''
+    This class represents a DBus object. It should be subclassed and to export
+    DBus methods, you must define typed functions with the
+    :meth:`jeepney_objects.object.dbus_object` decorator.
+    '''
+
     def __init__(self, name: Optional[str] = None):
+        '''
+        The class name will be used as the DBus object name unless otherwise
+        specified in the arguments.
+
+        :param name: DBus object name
+        '''
         self.is_dbus_object = True
         self._dbus_name = jeepney_objects.util.dbus_case(type(self).__name__ if not name else name)
 

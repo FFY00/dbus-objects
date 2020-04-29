@@ -17,7 +17,7 @@ def dbus_case(text: str) -> str:
     Converts text to the DBus object capitalization (camel case with the first
     letter capitalized)
 
-    :param text:
+    :param text: text to convert
     '''
     def capitalize(text: str) -> str:
         if not text:
@@ -32,7 +32,7 @@ def dbus_signature(typ: type) -> str:  # noqa: C901
     '''
     Converts a python type to a DBus signature
 
-    :param typ:
+    :param typ: python type to convert
     '''
     cls: type = typ if not typing.get_origin(typ) else typing.get_origin(typ)  # type: ignore
     args = typing.get_args(typ)
@@ -71,7 +71,7 @@ def dbus_signature_from_list(args: List[type]) -> str:
     '''
     Converts a list of python types to a DBus signature
 
-    :param args:
+    :param args: python type list
     '''
     return ''.join(dbus_signature(arg) for arg in args)
 
@@ -89,7 +89,7 @@ def get_dbus_signature(func: Callable[..., Any], ignore_first: bool = True) -> T
     Gets the DBus signature from a function
 
     :param func: target function
-    :param ingore_first: ignores first argument
+    :param ignore_first: ignores the first argument
     :returns:
         - input_signature
         - output_signature
