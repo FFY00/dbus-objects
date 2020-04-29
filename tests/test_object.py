@@ -4,7 +4,7 @@
 def test_dbus_object(obj):
     assert obj.is_dbus_object
     assert obj.dbus_name == 'ExampleObject'
-    assert 'ExampleMethod' in obj.get_dbus_handlers()
+    assert 'ExampleMethod' in obj.get_dbus_methods()
 
 
 def test_dbus_method(obj):
@@ -13,9 +13,9 @@ def test_dbus_method(obj):
     assert obj.example_method.dbus_signature
 
 
-def test_call(handlers):
-    assert handlers['ExampleMethod']() == 'test'
+def test_call(obj_methods):
+    assert obj_methods['ExampleMethod']() == 'test'
 
 
-def test_signature(handlers):
-    assert handlers['ExampleMethod'].dbus_signature == ('', 's')
+def test_signature(obj_methods):
+    assert obj_methods['ExampleMethod'].dbus_signature == ('', 's')

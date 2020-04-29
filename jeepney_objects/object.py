@@ -39,18 +39,19 @@ class DBusObject():
     def dbus_name(self) -> str:
         return self._dbus_name
 
-    def get_dbus_handlers(self) -> Dict[str, our_types.DBusMethod]:
+    def get_dbus_methods(self) -> Dict[str, our_types.DBusMethod]:
         '''
-        Returns a dictionary of the DBus method handlers
+        Returns a dictionary of the DBus methods. The key holds the DBus method
+        name and the value holds a reference to the function.
         '''
-        handlers = {}
+        methods = {}
 
         for attr in dir(self):
             obj = getattr(self, attr)
             if getattr(obj, 'is_dbus_method', False):
-                handlers[obj.dbus_method_name] = obj
+                methods[obj.dbus_method_name] = obj
 
-        return handlers
+        return methods
 
 
 class DBusObjectException(Exception):

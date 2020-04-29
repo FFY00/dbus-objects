@@ -29,8 +29,8 @@ def obj():
 
 
 @pytest.fixture(scope='session')
-def handlers(obj):
-    return obj.get_dbus_handlers()
+def obj_methods(obj):
+    return obj.get_dbus_methods()
 
 
 @pytest.fixture(params=['SESSION'])
