@@ -4,6 +4,7 @@ import pytest
 
 from jeepney_objects.integration.blocking import DBusServer
 from jeepney_objects.object import DBusObject, dbus_method
+from jeepney_objects.types import multiple_return
 
 
 class ExampleObject(DBusObject):
@@ -24,6 +25,10 @@ class ExampleObject(DBusObject):
 
     @dbus_method()
     def print(self, msg: str) -> None:
+        print(msg)  # pragma: no cover
+
+    @dbus_method()
+    def multiple(self, msg: str) -> multiple_return(int, int):
         print(msg)  # pragma: no cover
 
 

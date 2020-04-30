@@ -99,6 +99,10 @@ def get_dbus_signature(func: Callable[..., Any], skip_first_argument: bool = Tru
 
     if not ret or ret is sig.empty:
         ret = ''
+    elif typing.get_origin(ret) is jeepney_objects.types.DBusReturn:
+        print(typing.get_args(ret))
+        print(typing.get_args(typing.get_args(ret)))
+        ret = dbus_signature_from_list(list(typing.get_args(typing.get_args(ret)[0])))
     elif ret:
         ret = dbus_signature(ret)
 

@@ -27,3 +27,11 @@ def test_signature(obj_methods):
             assert method.dbus_signature == ('', 's')
             return
     assert False
+
+
+def test_signature_multiple_return(obj_methods):
+    for method in obj_methods:
+        if method.dbus_method_name == 'Multiple':
+            assert method.dbus_signature == ('s', 'ii')
+            return
+    assert False

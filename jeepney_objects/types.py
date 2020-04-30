@@ -3,6 +3,9 @@
 import typing
 
 
+T = typing.TypeVar('T')
+
+
 Byte = typing.TypeVar('Byte', int, int)
 UInt16 = typing.TypeVar('UInt16', int, int)
 UInt32 = typing.TypeVar('UInt32', int, int)
@@ -20,3 +23,11 @@ class DBusMethod(typing.Protocol):
     dbus_signature: typing.Tuple[str, str]  # in, out
     dbus_parameters: typing.Dict[str, str]  # name -> signature
     __call__: typing.Callable[..., typing.Any]
+
+
+class DBusReturn(typing.Generic[T]):
+    pass
+
+
+def multiple_return(*args: str) -> typing.Type[DBusReturn[typing.Any]]:
+    return DBusReturn[typing.Tuple[args]]  # type: ignore
