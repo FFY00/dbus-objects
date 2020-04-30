@@ -2,13 +2,13 @@
 
 import typing
 
-from typing import Any, Callable, Generator, Optional
+from typing import Any, Callable, List, Generator, Optional
 
 import jeepney_objects.types as our_types
 import jeepney_objects.util
 
 
-def dbus_method(interface: str = '', name: Optional[str] = None) \
+def dbus_method(interface: str = '', name: Optional[str] = None, return_names: List[str] = []) \
                 -> Callable[[Callable[..., Any]], our_types.DBusMethod]:
     '''
     Exports a function as a DBus method
@@ -34,6 +34,7 @@ def dbus_method(interface: str = '', name: Optional[str] = None) \
         dbus_method_func.dbus_signature = jeepney_objects.util.get_dbus_signature(func)
         dbus_method_func.dbus_method_name = jeepney_objects.util.dbus_case(method_name)
         dbus_method_func.dbus_interface = interface
+        dbus_method_func.dbus_return_names = return_names
 
         return dbus_method_func
     return decorator

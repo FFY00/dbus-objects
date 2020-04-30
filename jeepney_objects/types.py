@@ -22,6 +22,7 @@ class DBusMethod(typing.Protocol):
     dbus_method_name: str
     dbus_signature: typing.Tuple[str, str]  # in, out
     dbus_parameters: typing.Dict[str, str]  # name -> signature
+    dbus_return_names: typing.List[str]
     __call__: typing.Callable[..., typing.Any]
 
 

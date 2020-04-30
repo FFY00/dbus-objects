@@ -107,3 +107,13 @@ def get_dbus_signature(func: Callable[..., Any], skip_first_argument: bool = Tru
         ret = dbus_signature(ret)
 
     return args, ret
+
+
+def get_dbus_method_parameter_names(func: jeepney_objects.types.DBusMethod) -> Tuple[List[str], List[str]]:
+    sig = inspect.signature(func)
+
+    args = sig.parameters.copy()  # type: ignore
+    if args:
+        args.popitem(last=False)
+
+    return list(name for name in args), func.dbus_return_names
