@@ -8,7 +8,8 @@ import jeepney_objects.types as our_types
 import jeepney_objects.util
 
 
-def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], our_types.DBusMethod]:
+def dbus_method(interface: str = '', name: Optional[str] = None) \
+                -> Callable[[Callable[..., Any]], our_types.DBusMethod]:
     '''
     Exports a function as a DBus method
 
@@ -18,6 +19,7 @@ def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], ou
     The function name will be used as the DBus method name unless otherwise
     specified in the arguments.
 
+    :param interface: DBus interface name
     :param name: DBus method name
     '''
 
@@ -31,6 +33,7 @@ def dbus_method(name: Optional[str] = None) -> Callable[[Callable[..., Any]], ou
         dbus_method_func.is_dbus_method = True
         dbus_method_func.dbus_signature = jeepney_objects.util.get_dbus_signature(func)
         dbus_method_func.dbus_method_name = jeepney_objects.util.dbus_case(method_name)
+        dbus_method_func.dbus_interface = interface
 
         return dbus_method_func
     return decorator
@@ -43,7 +46,7 @@ class DBusObject():
     :meth:`jeepney_objects.object.dbus_object` decorator.
     '''
 
-    def __init__(self, name: Optional[str] = None):
+    def __init__(self, name: Optional[str] = None, default_interface: Optional[str] = None):
         '''
         The class name will be used as the DBus object name unless otherwise
         specified in the arguments.
@@ -52,6 +55,8 @@ class DBusObject():
         '''
         self.is_dbus_object = True
         self._dbus_name = jeepney_objects.util.dbus_case(type(self).__name__ if not name else name)
+        self.default_interface = default_interface
+        self.server_name: Optional[str] = None
 
     @property
     def dbus_name(self) -> str:
@@ -65,7 +70,15 @@ class DBusObject():
         for attr in dir(self):
             obj = getattr(self, attr)
             if getattr(obj, 'is_dbus_method', False):
-                yield obj
+                method = typing.cast(our_types.DBusMethod, obj)
+                if self.default_interface:
+                    interface = '.'.join([self.default_interface, self._dbus_name])
+                elif self.server_name:
+                    interface = '.'.join([self.server_name, self._dbus_name])
+                else:
+                    raise DBusObjectException(f'Missing interface in DBus method \'{method.dbus_method_name}\'')
+                method.__dict__['dbus_interface'] = interface  # hack! please let me know if you have a better solution
+                yield method
 
 
 class DBusObjectException(Exception):

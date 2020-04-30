@@ -7,6 +7,10 @@ from jeepney_objects.object import DBusObject, dbus_method
 
 
 class ExampleObject(DBusObject):
+    def __init__(self):
+        super().__init__()
+        self.server_name = 'com.example.object'
+
     @dbus_method()
     def example_method(self) -> str:
         return 'test'

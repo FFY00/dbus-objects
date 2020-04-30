@@ -15,6 +15,8 @@ Signature = typing.TypeVar('Signature', str, bytes)
 
 class DBusMethod(typing.Protocol):
     is_dbus_method: typing.Literal[True]
+    dbus_interface: str
     dbus_method_name: str
-    dbus_signature: typing.Tuple[str, str]
-    __call__: typing.Callable[..., typing.Tuple[str, typing.Tuple[typing.Any]]]
+    dbus_signature: typing.Tuple[str, str]  # in, out
+    dbus_parameters: typing.Dict[str, str]  # name -> signature
+    __call__: typing.Callable[..., typing.Any]
