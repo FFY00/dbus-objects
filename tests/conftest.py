@@ -28,7 +28,7 @@ def obj():
     return ExampleObject()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def obj_methods(obj):
     return obj.get_dbus_methods()
 

@@ -2,7 +2,7 @@
 
 import typing
 
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Generator, Optional
 
 import jeepney_objects.types as our_types
 import jeepney_objects.util
@@ -57,19 +57,15 @@ class DBusObject():
     def dbus_name(self) -> str:
         return self._dbus_name
 
-    def get_dbus_methods(self) -> Dict[str, our_types.DBusMethod]:
+    def get_dbus_methods(self) -> Generator[our_types.DBusMethod, our_types.DBusMethod, None]:
         '''
         Returns a dictionary of the DBus methods. The key holds the DBus method
         name and the value holds a reference to the function.
         '''
-        methods = {}
-
         for attr in dir(self):
             obj = getattr(self, attr)
             if getattr(obj, 'is_dbus_method', False):
-                methods[obj.dbus_method_name] = obj
-
-        return methods
+                yield obj
 
 
 class DBusObjectException(Exception):
