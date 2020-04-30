@@ -70,9 +70,9 @@ def test_get_dbus_signature():
     def method3(arg: typing.Dict[int, str]) -> typing.Dict[int, str]:
         pass  # pragma: no cover
 
-    assert get_dbus_signature(method1, ignore_first=False) == ('a{sa{ss}}', '')
-    assert get_dbus_signature(method2, ignore_first=False) == ('', 'aao')
-    assert get_dbus_signature(method3, ignore_first=False) == ('a{is}', 'a{is}')
+    assert get_dbus_signature(method1, skip_first_argument=False) == ('a{sa{ss}}', '')
+    assert get_dbus_signature(method2, skip_first_argument=False) == ('', 'aao')
+    assert get_dbus_signature(method3, skip_first_argument=False) == ('a{is}', 'a{is}')
 
 
 def test_get_dbus_sigature_no_annotations():
@@ -80,4 +80,4 @@ def test_get_dbus_sigature_no_annotations():
         pass  # pragma: no cover
 
     with pytest.raises(DBusObjectException):
-        get_dbus_signature(method, ignore_first=False)
+        get_dbus_signature(method, skip_first_argument=False)

@@ -3,13 +3,10 @@
 import inspect
 import typing
 
-from typing import Any, Callable, Generator, List, Tuple
+from typing import Any, Callable, List, Tuple
 
 import jeepney_objects.object
 import jeepney_objects.types
-
-if typing.TYPE_CHECKING:  # pragma: no cover
-    import collections
 
 
 def dbus_case(text: str) -> str:
@@ -76,33 +73,33 @@ def dbus_signature_from_list(args: List[type]) -> str:
     return ''.join(dbus_signature(arg) for arg in args)
 
 
-def _sig_parameters(args: 'collections.OrderedDict[str, inspect.Parameter]') -> Generator[type, type, None]:
-    while args:
-        key, value = args.popitem(last=False)
-        if value.annotation is value.empty:
-            raise jeepney_objects.object.DBusObjectException(f'Argument \'{key}\' is missing a type annotation')
-        yield value.annotation
-
-
-def get_dbus_signature(func: Callable[..., Any], ignore_first: bool = True) -> Tuple[str, str]:
+def get_dbus_signature(func: Callable[..., Any], skip_first_argument: bool = True) -> Tuple[str, str]:
     '''
     Gets the DBus signature from a function
 
     :param func: target function
-    :param ignore_first: ignores the first argument
+    :param skip_first_argument: skips the first argument (for use with class methods)
     :returns:
         - input_signature
         - output_signature
     '''
     sig = inspect.signature(func)
-    ret = sig.return_annotation if sig.return_annotation != sig.empty else None
+
     args = sig.parameters.copy()  # type: ignore
-    if ignore_first and args:
+    ret = sig.return_annotation
+
+    if skip_first_argument and args:
         args.popitem(last=False)
 
-    args = list(_sig_parameters(args))
+    for key, value in args.items():
+        if value.annotation is value.empty:
+            raise jeepney_objects.object.DBusObjectException(f'Argument \'{key}\' is missing a type annotation')
 
-    return (
-        dbus_signature_from_list(args) if args else '',
-        dbus_signature(ret) if ret else ''
-    )
+    args = dbus_signature_from_list(list(arg.annotation for arg in args.values()))
+
+    if not ret or ret is sig.empty:
+        ret = ''
+    elif ret:
+        ret = dbus_signature(ret)
+
+    return args, ret
