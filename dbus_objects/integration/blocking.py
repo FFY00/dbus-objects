@@ -6,7 +6,7 @@ import jeepney.bus_messages
 import jeepney.integrate.blocking
 import jeepney.low_level
 
-import dbus_objects.integration.base
+import dbus_objects.integration.base  # isort:skip
 
 
 class DBusServer(dbus_objects.integration.base.DBusServerBase):
