@@ -1,5 +1,5 @@
-jeepney-objects
-===============
+dbus-objects
+============
 
 .. toctree::
    :maxdepth: 2

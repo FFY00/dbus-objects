@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: MIT
 
+import time
+
 import jeepney.bus_messages
 import jeepney.low_level
 import jeepney.integrate.blocking
 
-import jeepney_objects.integration.base
+import dbus_objects.integration.base
 
 
-class DBusServer(jeepney_objects.integration.base.DBusServerBase):
+class DBusServer(dbus_objects.integration.base.DBusServerBase):
     '''
     This class represents a DBus server. It should be instanciated.
     '''
@@ -30,10 +32,25 @@ class DBusServer(jeepney_objects.integration.base.DBusServerBase):
 
     def _handle_msg(self, msg: jeepney.low_level.Message) -> None:
         if msg.header.message_type == jeepney.low_level.MessageType.method_call:
+            print('Message')
+            print(f'\ttype = {msg.header.message_type}')
+            for key, value in msg.header.fields.items():
+                print(f'\t(field) {key} = {value}')
+
             interface = msg.header.fields[jeepney.low_level.HeaderFields.interface]
 
-            if interface in self._interfaces:
+            if interface in self.interfaces:
                 pass
+            else:
+                print(f'Unhandled message (unkown interface)! {interface}')
+
+        else:
+            print(f'Unhandled message! {msg} / {msg.header} / {msg.header.fields}')
 
     def close(self) -> None:
         self._conn.close()
+
+    def listen(self, delay: float = 0.01) -> None:
+        while True:
+            self._conn.recv_messages()
+            time.sleep(delay)

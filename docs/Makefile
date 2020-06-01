@@ -9,7 +9,7 @@ SPHINXAPIDOC  ?= sphinx-apidoc
 SOURCEDIR     = source
 BUILDDIR      = build
 SRCBUILDDIR   = srcbuild
-MODULEDIR     = ../jeepney_objects
+MODULEDIR     = ../dbus_objects
 
 .DEFAULT_GOAL := html
 

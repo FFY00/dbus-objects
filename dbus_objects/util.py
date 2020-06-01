@@ -5,8 +5,8 @@ import typing
 
 from typing import Any, Callable, List, Tuple
 
-import jeepney_objects.object
-import jeepney_objects.types
+import dbus_objects.object
+import dbus_objects.types
 
 
 def dbus_case(text: str) -> str:
@@ -44,24 +44,24 @@ def dbus_signature(typ: type) -> str:  # noqa: C901
         return 's'
     elif cls is float:
         return 'd'
-    elif cls is int or cls is jeepney_objects.types.Int32:
+    elif cls is int or cls is dbus_objects.types.Int32:
         return 'i'
-    elif cls is jeepney_objects.types.Byte:
+    elif cls is dbus_objects.types.Byte:
         return 'y'
-    elif cls is jeepney_objects.types.UInt16:
+    elif cls is dbus_objects.types.UInt16:
         return 'q'
-    elif cls is jeepney_objects.types.UInt32:
+    elif cls is dbus_objects.types.UInt32:
         return 'u'
-    elif cls is jeepney_objects.types.UInt64:
+    elif cls is dbus_objects.types.UInt64:
         return 't'
-    elif cls is jeepney_objects.types.Int16:
+    elif cls is dbus_objects.types.Int16:
         return 'n'
-    elif cls is jeepney_objects.types.Int64:
+    elif cls is dbus_objects.types.Int64:
         return 'x'
-    elif cls is jeepney_objects.object.DBusObject:
+    elif cls is dbus_objects.object.DBusObject:
         return 'o'
 
-    raise jeepney_objects.object.DBusObjectException(f'Can\'t convert \'{typ}\' to a DBus signature')
+    raise dbus_objects.object.DBusObjectException(f'Can\'t convert \'{typ}\' to a DBus signature')
 
 
 def dbus_signature_from_list(args: List[type]) -> str:
@@ -93,13 +93,13 @@ def get_dbus_signature(func: Callable[..., Any], skip_first_argument: bool = Tru
 
     for key, value in args.items():
         if value.annotation is value.empty:
-            raise jeepney_objects.object.DBusObjectException(f'Argument \'{key}\' is missing a type annotation')
+            raise dbus_objects.object.DBusObjectException(f'Argument \'{key}\' is missing a type annotation')
 
     args = dbus_signature_from_list(list(arg.annotation for arg in args.values()))
 
     if not ret or ret is sig.empty:
         ret = ''
-    elif typing.get_origin(ret) is jeepney_objects.types.DBusReturn:
+    elif typing.get_origin(ret) is dbus_objects.types.DBusReturn:
         print(typing.get_args(ret))
         print(typing.get_args(typing.get_args(ret)))
         ret = dbus_signature_from_list(list(typing.get_args(typing.get_args(ret)[0])))
@@ -109,7 +109,7 @@ def get_dbus_signature(func: Callable[..., Any], skip_first_argument: bool = Tru
     return args, ret
 
 
-def get_dbus_method_parameter_names(func: jeepney_objects.types.DBusMethod) -> Tuple[List[str], List[str]]:
+def get_dbus_method_parameter_names(func: dbus_objects.types.DBusMethod) -> Tuple[List[str], List[str]]:
     sig = inspect.signature(func)
 
     args = sig.parameters.copy()  # type: ignore

@@ -11,7 +11,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setuptools.setup(
-    name='jeepney-objects',
+    name='dbus-objects',
     version='0.0.1',
     description='Jeepney objects implementation',
     long_description=long_description,
@@ -27,13 +27,13 @@ setuptools.setup(
     ],
     keywords='dbus jeepney',
     project_urls={
-        'Bug Reports': 'https://github.com/FFY00/jeepney-objects/issues',
-        'Source': 'https://github.com/FFY00/jeepney-objects',
+        'Bug Reports': 'https://github.com/FFY00/dbus-objects/issues',
+        'Source': 'https://github.com/FFY00/dbus-objects',
     },
 
     packages=[
-        'jeepney_objects',
-        'jeepney_objects.integration',
+        'dbus_objects',
+        'dbus_objects.integration',
     ],
     install_requires=['jeepney'],
     tests_require=[

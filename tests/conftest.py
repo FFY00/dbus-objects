@@ -2,9 +2,9 @@
 
 import pytest
 
-from jeepney_objects.integration.blocking import DBusServer
-from jeepney_objects.object import DBusObject, dbus_method
-from jeepney_objects.types import multiple_return
+from dbus_objects.integration.blocking import DBusServer
+from dbus_objects.object import DBusObject, dbus_method
+from dbus_objects.types import multiple_return
 
 
 class ExampleObject(DBusObject):

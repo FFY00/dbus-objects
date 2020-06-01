@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Static analysis with mypy
-        run: mypy --ignore-missing-imports --strict -p jeepney_objects
+        run: mypy --ignore-missing-imports --strict -p dbus_objects
 
       - name: Lint with flake8
         run: flake8 . --count --show-source --statistics

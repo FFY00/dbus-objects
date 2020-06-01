@@ -5,4 +5,4 @@ tatus:
         threshold: 5%
         base: auto
         paths:
-          - 'jeepney_objects'
+          - 'dbus_objects'

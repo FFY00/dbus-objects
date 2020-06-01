@@ -1,7 +1,7 @@
-jeepney_objects
-===============
+dbus_objects
+============
 
 .. toctree::
    :maxdepth: 4
 
-   jeepney_objects
+   dbus_objects

@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'jeepney-objects'
+project = 'dbus-objects'
 copyright = '2020, Filipe Laíns'
 author = 'Filipe Laíns'
 
@@ -66,8 +66,8 @@ html_theme = 'flask'
 
 html_context = {
     'project_links': [
-        ProjectLink('Source Code', 'https://github.com/libratbag/ratbag-emu/'),
-        ProjectLink('Issue Tracker', 'https://github.com/libratbag/ratbag-emu/issues/'),
+        ProjectLink('Source Code', 'https://github.com/FFY00/dbus-objects/'),
+        ProjectLink('Issue Tracker', 'https://github.com/FFY00/dbus-objects/issues/'),
     ]
 }
 html_sidebars = {

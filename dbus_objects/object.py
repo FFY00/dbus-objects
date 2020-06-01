@@ -4,8 +4,8 @@ import typing
 
 from typing import Any, Callable, List, Generator, Optional
 
-import jeepney_objects.types as our_types
-import jeepney_objects.util
+import dbus_objects.types as our_types
+import dbus_objects.util
 
 
 def dbus_method(interface: str = '', name: Optional[str] = None, return_names: List[str] = []) \
@@ -31,8 +31,8 @@ def dbus_method(interface: str = '', name: Optional[str] = None, return_names: L
         dbus_method_func = typing.cast(our_types.DBusMethod, func)
 
         dbus_method_func.is_dbus_method = True
-        dbus_method_func.dbus_signature = jeepney_objects.util.get_dbus_signature(func)
-        dbus_method_func.dbus_method_name = jeepney_objects.util.dbus_case(method_name)
+        dbus_method_func.dbus_signature = dbus_objects.util.get_dbus_signature(func)
+        dbus_method_func.dbus_method_name = dbus_objects.util.dbus_case(method_name)
         dbus_method_func.dbus_interface = interface
         dbus_method_func.dbus_return_names = return_names
 
@@ -44,7 +44,7 @@ class DBusObject():
     '''
     This class represents a DBus object. It should be subclassed and to export
     DBus methods, you must define typed functions with the
-    :meth:`jeepney_objects.object.dbus_object` decorator.
+    :meth:`dbus_objects.object.dbus_object` decorator.
     '''
 
     def __init__(self, name: Optional[str] = None, default_interface: Optional[str] = None):
@@ -55,7 +55,7 @@ class DBusObject():
         :param name: DBus object name
         '''
         self.is_dbus_object = True
-        self._dbus_name = jeepney_objects.util.dbus_case(type(self).__name__ if not name else name)
+        self._dbus_name = dbus_objects.util.dbus_case(type(self).__name__ if not name else name)
         self.default_interface = default_interface
         self.server_name: Optional[str] = None
 
