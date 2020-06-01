@@ -1,4 +1,4 @@
-# dbus-objects ![.github/workflows/test.yml](https://github.com/FFY00/dbus-objects/workflows/.github/workflows/test.yml/badge.svg) DBus[![codecov](https://codecov.io/gh/FFY00/dbus-objects/branch/master/graph/badge.svg)](https://codecov.io/gh/FFY00/dbus-objects)
+# dbus-objects ![checks](https://github.com/FFY00/dbus-objects/workflows/checks/badge.svg) ![tests](https://github.com/FFY00/dbus-objects/workflows/tests/badge.svg) [![codecov](https://codecov.io/gh/FFY00/dbus-objects/branch/master/graph/badge.svg)](https://codecov.io/gh/FFY00/dbus-objects)
 
 DBus objects implementation
 
