@@ -1,10 +1,12 @@
+name: doc
+
 on:
   push:
     branches:
       - master
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
     container:
       image: archlinux

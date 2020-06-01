@@ -1,0 +1,33 @@
+name: tests
+
+on: [push, pull_request]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [3.8]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install dependencies
+        run: |
+            pip install --upgrade pip
+            pip install jeepney pytest pytest-cov
+            pytest --version
+
+      - name: Run tests
+        run: dbus-run-session -- pytest -v --cov --cov-report=xml
+
+      - name: Send coverage report
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
