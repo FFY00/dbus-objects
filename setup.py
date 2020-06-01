@@ -34,6 +34,7 @@ setuptools.setup(
     packages=[
         'dbus_objects',
         'dbus_objects.integration',
+        'dbus_objects.integration.jeepney',
     ],
     install_requires=['jeepney'],
     tests_require=[

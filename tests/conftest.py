@@ -2,7 +2,7 @@
 
 import pytest
 
-from dbus_objects.integration.blocking import DBusServer
+from dbus_objects.integration.jeepney.blocking import DBusServer
 from dbus_objects.object import DBusObject, dbus_method
 from dbus_objects.types import multiple_return
 

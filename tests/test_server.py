@@ -3,7 +3,7 @@
 import jeepney.wrappers
 import pytest
 
-from dbus_objects.integration.blocking import DBusServer
+from dbus_objects.integration.jeepney.blocking import DBusServer
 
 
 def test_create(server):
