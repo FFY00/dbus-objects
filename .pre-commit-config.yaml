@@ -18,6 +18,11 @@ hooks:
     name: isort
     entry: isort
     <<: *base
+  - &pytest
+    id: pytest
+    name: pytest
+    entry: pytest
+    <<: *base
 
 repos:
   - repo: local
@@ -29,4 +34,6 @@ repos:
       - <<: *isort
         files: ^dbus_objects/
         args: ['--check-only', '--diff']
+      - <<: *pytest
+        files: ^(dbus_objects|tests)/
 
