@@ -13,7 +13,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 setuptools.setup(
     name='dbus-objects',
     version='0.0.1',
-    description='Jeepney objects implementation',
+    description='DBus objects implementation on top of the Python type system',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/libratbag/ratbag-emu',
