@@ -2,7 +2,7 @@
 
 import xml.etree.ElementTree as ET
 
-from typing import Dict, Generator, List, Union
+from typing import Dict, List, Union
 
 import dbus_objects.types
 import dbus_objects.util
