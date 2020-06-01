@@ -3,8 +3,8 @@
 import time
 
 import jeepney.bus_messages
-import jeepney.low_level
 import jeepney.integrate.blocking
+import jeepney.low_level
 
 import dbus_objects.integration.base
 

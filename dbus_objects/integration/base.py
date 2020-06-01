@@ -2,11 +2,10 @@
 
 import collections
 
-from typing import Dict, List, DefaultDict
+from typing import DefaultDict, Dict, List
 
 import dbus_objects.object
 import dbus_objects.types
-
 
 MethodDict = DefaultDict[str, DefaultDict[str, Dict[str, dbus_objects.types.DBusMethod]]]
 

@@ -2,7 +2,7 @@
 
 import typing
 
-from typing import Any, Callable, List, Generator, Optional
+from typing import Any, Callable, Generator, List, Optional
 
 import dbus_objects.types as our_types
 import dbus_objects.util

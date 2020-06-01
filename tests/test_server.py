@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
-import pytest
 import jeepney.wrappers
+import pytest
 
 from dbus_objects.integration.blocking import DBusServer
 

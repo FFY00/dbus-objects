@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 
 import os
-import setuptools
 
+import setuptools
 
 here = os.path.abspath(os.path.dirname(__file__))
 

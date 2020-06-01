@@ -7,7 +7,7 @@ import pytest
 import dbus_objects.types
 
 from dbus_objects.object import DBusObject, DBusObjectException
-from dbus_objects.util import get_dbus_signature, dbus_case, dbus_signature, dbus_signature_from_list
+from dbus_objects.util import dbus_case, dbus_signature, dbus_signature_from_list, get_dbus_signature
 
 
 def test_signature():

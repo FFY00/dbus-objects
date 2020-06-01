@@ -2,10 +2,10 @@
 
 import xml.etree.ElementTree as ET
 
-from typing import List, Dict, Generator, Union
+from typing import Dict, Generator, List, Union
 
-import dbus_objects.util
 import dbus_objects.types
+import dbus_objects.util
 
 
 def _append_method_args(tree: ET.TreeBuilder, direction: str, sig: str, names: List[str]) -> None:
