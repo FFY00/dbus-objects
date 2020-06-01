@@ -14,6 +14,8 @@ Int32 = typing.TypeVar('Int32', int, int)
 Int64 = typing.TypeVar('Int64', int, int)
 Signature = typing.TypeVar('Signature', str, bytes)
 
+MultipleReturn = typing.Tuple  # type: ignore
+
 
 class DBusMethod(typing.Protocol):
     is_dbus_method: typing.Literal[True]
@@ -23,11 +25,3 @@ class DBusMethod(typing.Protocol):
     dbus_parameters: typing.Dict[str, str]  # name -> signature
     dbus_return_names: typing.List[str]
     __call__: typing.Callable[..., typing.Any]
-
-
-class DBusReturn(typing.Generic[T]):
-    pass
-
-
-def multiple_return(*args: str) -> typing.Type[DBusReturn[typing.Any]]:
-    return DBusReturn[typing.Tuple[args]]  # type: ignore

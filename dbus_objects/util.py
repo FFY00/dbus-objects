@@ -3,7 +3,7 @@
 import inspect
 import typing
 
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, Iterable, List, Tuple
 
 import dbus_objects.object
 import dbus_objects.types
@@ -64,7 +64,7 @@ def dbus_signature(typ: type) -> str:  # noqa: C901
     raise dbus_objects.object.DBusObjectException(f'Can\'t convert \'{typ}\' to a DBus signature')
 
 
-def dbus_signature_from_list(args: List[type]) -> str:
+def dbus_signature_from_list(args: Iterable[type]) -> str:
     '''
     Converts a list of python types to a DBus signature
 
@@ -73,7 +73,8 @@ def dbus_signature_from_list(args: List[type]) -> str:
     return ''.join(dbus_signature(arg) for arg in args)
 
 
-def get_dbus_signature(func: Callable[..., Any], skip_first_argument: bool = True) -> Tuple[str, str]:
+def get_dbus_signature(func: Callable[..., Any], multiple_returns: bool = False, skip_first_argument: bool = True) \
+                       -> Tuple[str, str]:
     '''
     Gets the DBus signature from a function
 
@@ -99,10 +100,8 @@ def get_dbus_signature(func: Callable[..., Any], skip_first_argument: bool = Tru
 
     if not ret or ret is sig.empty:
         ret = ''
-    elif typing.get_origin(ret) is dbus_objects.types.DBusReturn:
-        print(typing.get_args(ret))
-        print(typing.get_args(typing.get_args(ret)))
-        ret = dbus_signature_from_list(list(typing.get_args(typing.get_args(ret)[0])))
+    elif multiple_returns:
+        ret = dbus_signature_from_list(typing.get_args(ret))
     elif ret:
         ret = dbus_signature(ret)
 

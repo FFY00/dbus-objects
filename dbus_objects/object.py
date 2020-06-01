@@ -8,8 +8,8 @@ import dbus_objects.types as our_types
 import dbus_objects.util
 
 
-def dbus_method(interface: str = '', name: Optional[str] = None, return_names: List[str] = []) \
-                -> Callable[[Callable[..., Any]], our_types.DBusMethod]:
+def dbus_method(interface: str = '', name: Optional[str] = None, return_names: List[str] = [],
+                multiple_returns: bool = False) -> Callable[[Callable[..., Any]], our_types.DBusMethod]:
     '''
     Exports a function as a DBus method
 
@@ -21,6 +21,7 @@ def dbus_method(interface: str = '', name: Optional[str] = None, return_names: L
 
     :param interface: DBus interface name
     :param name: DBus method name
+    :param multiple_returns: Returns multiple parameters
     '''
 
     def decorator(func: Callable[..., Any]) -> our_types.DBusMethod:
@@ -31,7 +32,7 @@ def dbus_method(interface: str = '', name: Optional[str] = None, return_names: L
         dbus_method_func = typing.cast(our_types.DBusMethod, func)
 
         dbus_method_func.is_dbus_method = True
-        dbus_method_func.dbus_signature = dbus_objects.util.get_dbus_signature(func)
+        dbus_method_func.dbus_signature = dbus_objects.util.get_dbus_signature(func, multiple_returns)
         dbus_method_func.dbus_method_name = dbus_objects.util.dbus_case(method_name)
         dbus_method_func.dbus_interface = interface
         dbus_method_func.dbus_return_names = return_names
