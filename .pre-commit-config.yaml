@@ -1,0 +1,32 @@
+hooks:
+  - &base
+    language: python
+    types: [python]
+    require_serial: true
+  - &mypy
+    id: mypy
+    name: mypy
+    entry: mypy
+    <<: *base
+  - &flake8
+    id: flake8
+    name: flake8
+    entry: flake8
+    <<: *base
+  - &isort
+    id: isort
+    name: isort
+    entry: isort
+    <<: *base
+
+repos:
+  - repo: local
+    hooks:
+      - <<: *mypy
+        files: ^dbus_objects/
+      - <<: *flake8
+        files: ^dbus_objects/
+      - <<: *isort
+        files: ^dbus_objects/
+        args: ['--check-only', '--diff']
+
