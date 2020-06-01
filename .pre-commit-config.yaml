@@ -22,6 +22,7 @@ hooks:
     id: pytest
     name: pytest
     entry: pytest
+    args: ['-x']
     <<: *base
 
 repos:
@@ -35,5 +36,11 @@ repos:
         files: ^dbus_objects/
         args: ['--check-only', '--diff']
       - <<: *pytest
+        name: pytest (source changes)
         files: ^(dbus_objects|tests)/
+        exclude: ^tests/test_*.py
+        pass_filenames: false
+      - <<: *pytest
+        name: pytest (test changes)
+        files: ^tests/test_
 
