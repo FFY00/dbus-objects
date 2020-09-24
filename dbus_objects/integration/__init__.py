@@ -15,15 +15,9 @@ import dbus_objects.object
 import dbus_objects.types
 
 
-class _StandardInterfacesObject(dbus_objects.object.DBusObject):
+class _Introspectable(dbus_objects.object.DBusObject):
     '''
-    Standard DBus interfaces implementation
-
-    Provides:
-      - org.freedesktop.DBus.Peer
-      - org.freedesktop.DBus.Introspectable
-      - org.freedesktop.DBus.Properties
-      - org.freedesktop.DBus.ObjectManager
+    https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-introspectable
     '''
     _XML_DOCTYPE = textwrap.dedent('''\
     <!DOCTYPE node PUBLIC
@@ -33,20 +27,17 @@ class _StandardInterfacesObject(dbus_objects.object.DBusObject):
 
     def __init__(self, path: str, dbus_tree: treelib.Tree):
         '''
-        :param methods: dictionary holding the registered DBus methods
+        :param path: path where the onject is being resgistered
+        :param dbus_tree: DBus server tree
         '''
-        super().__init__()
+        super().__init__(
+            name='Introspectable',
+            default_interface_root='org.freedesktop.DBus',
+        )
         self._path = path
         self._tree = dbus_tree
 
-    @dbus_objects.object.dbus_method(interface='org.freedesktop.DBus.Peer')
-    def ping(self) -> None:
-        return
-
-    @dbus_objects.object.dbus_method(
-        interface='org.freedesktop.DBus.Introspectable',
-        return_names=('xml',),
-    )
+    @dbus_objects.object.dbus_method(return_names=('xml',))
     def introspect(self) -> str:
         xml = ET.Element('node', {'xmlns:doc': 'http://www.freedesktop.org/dbus/1.0/doc.dtd'})
 
@@ -65,9 +56,52 @@ class _StandardInterfacesObject(dbus_objects.object.DBusObject):
 
         return self._XML_DOCTYPE + ET.tostring(xml).decode()
 
-    @dbus_objects.object.dbus_method(interface='org.freedesktop.DBus.Properties')
+
+class _Peer(dbus_objects.object.DBusObject):
+    '''
+    https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-peer
+    '''
+    def __init__(self) -> None:
+        super().__init__(
+            name='Peer',
+            default_interface_root='org.freedesktop.DBus',
+        )
+
+    @dbus_objects.object.dbus_method()
+    def ping(self) -> None:
+        return
+
+    # TODO: GetMachineId() - how to reliably get the ID?
+
+
+class _Properties(dbus_objects.object.DBusObject):
+    '''
+    https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-properties
+    '''
+    def __init__(self) -> None:
+        super().__init__(
+            name='Properties',
+            default_interface_root='org.freedesktop.DBus',
+        )
+
+    @dbus_objects.object.dbus_method()
+    def get(self, interface_name: str, property_name: str) -> dbus_objects.types.Variant:
+        # TODO: interface == ''
+        return '', None
+
+    @dbus_objects.object.dbus_method(name='set')
+    def set_(self, interface_name: str, property_name: str, value: dbus_objects.types.Variant) -> None:
+        # TODO: interface == ''
+        pass
+
+    @dbus_objects.object.dbus_method()
     def get_all(self, interface_name: str) -> Dict[str, dbus_objects.types.Variant]:
         return {}
+
+    # TODO: PropertiesChanged
+
+
+# TODO: org.freedesktop.DBus.ObjectManager
 
 
 class DBusServerBase():
@@ -139,11 +173,13 @@ class DBusServerBase():
         self.__logger.debug(f'registering {obj.dbus_name} in {path}')
         # TODO: validate paths, interfaces and method names
         self._register_object(path, obj)
+        self._register_object(path, _Properties(), ignore_warn=True)
         do = True
         while do:
+            self._register_object(path, _Peer(), ignore_warn=True)
             self._register_object(
                 path,
-                _StandardInterfacesObject(path, self._tree),
+                _Introspectable(path, self._tree),
                 ignore_warn=True
             )
             do = path != '/'
