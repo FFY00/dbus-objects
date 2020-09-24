@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
             pip install --upgrade pip
-            pip install jeepney pytest pytest-cov
+            pip install treelib jeepney pytest pytest-cov
             pytest --version
 
       - name: Run tests
