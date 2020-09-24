@@ -110,7 +110,7 @@ paths
 ```
 
 And, for eg., the following DBus introspection XML for `/io/github/ffy00/dbus_objects/example`:
-```
+```xml
 <!DOCTYPE node PUBLIC
 "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" >
