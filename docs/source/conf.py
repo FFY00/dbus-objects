@@ -15,6 +15,7 @@ import sys
 
 from pallets_sphinx_themes import ProjectLink
 
+
 sys.path.insert(0, os.path.abspath('../..'))
 
 

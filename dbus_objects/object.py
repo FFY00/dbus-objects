@@ -11,7 +11,7 @@ import dbus_objects.types as our_types
 def dbus_method(
     interface: Optional[str] = None,
     name: Optional[str] = None,
-    return_names: Sequence[str] = [],
+    return_names: Optional[Sequence[str]] = None,
     multiple_returns: bool = False,
 ) -> Callable[[Callable[..., Any]], our_types.DBusMethod]:
     '''
@@ -28,6 +28,8 @@ def dbus_method(
     :param return_names: Names of the return arguments
     :param multiple_returns: Returns multiple parameters
     '''
+    if not return_names:
+        return_names = []
 
     def decorator(func: Callable[..., Any]) -> our_types.DBusMethod:
         method_name = name

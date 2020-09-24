@@ -3,8 +3,8 @@ import random
 
 from typing import List
 
-import dbus_objects.object
 import dbus_objects.integration.jeepney
+import dbus_objects.object
 
 
 class ExampleObject(dbus_objects.object.DBusObject):

@@ -144,7 +144,7 @@ class DBusServerBase():
                         if method_node.tag == method:
                             return typing.cast(dbus_objects.types.DBusMethod, method_node.data)
                     break  # right interface but didn't find the method
-        raise KeyError(f"Method not found: path={path} interface={interface} method={method}")
+        raise KeyError(f'Method not found: path={path} interface={interface} method={method}')
 
     def _register_object(
         self,

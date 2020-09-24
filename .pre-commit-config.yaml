@@ -1,46 +1,24 @@
-hooks:
-  - &base
-    language: python
-    types: [python]
-    require_serial: true
-  - &mypy
-    id: mypy
-    name: mypy
-    entry: mypy
-    <<: *base
-  - &flake8
-    id: flake8
-    name: flake8
-    entry: flake8
-    <<: *base
-  - &isort
-    id: isort
-    name: isort
-    entry: isort
-    <<: *base
-  - &pytest
-    id: pytest
-    name: pytest
-    entry: pytest
-    args: ['-x']
-    <<: *base
-
 repos:
-  - repo: local
-    hooks:
-      - <<: *mypy
-        files: ^dbus_objects/
-      - <<: *flake8
-        files: ^dbus_objects/
-      - <<: *isort
-        files: ^dbus_objects/
-        args: ['--check-only', '--diff']
-      - <<: *pytest
-        name: pytest (source changes)
-        files: ^(dbus_objects|tests)/
-        exclude: ^tests/test_*.py
-        pass_filenames: false
-      - <<: *pytest
-        name: pytest (test changes)
-        files: ^tests/test_
-
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.1.0
+  hooks:
+  - id: check-ast
+  - id: check-builtin-literals
+  - id: check-docstring-first
+  - id: check-merge-conflict
+  - id: check-yaml
+  - id: check-toml
+  - id: debug-statements
+  - id: double-quote-string-fixer
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+- repo: https://github.com/pre-commit/mirrors-isort
+  rev: v5.5.3
+  hooks:
+  - id: isort
+- repo: https://gitlab.com/pycqa/flake8
+  rev: 3.8.3
+  hooks:
+  - id: flake8
+    additional_dependencies: ['flake8-bugbear']
+    language_version: python3.8
