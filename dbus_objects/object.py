@@ -9,7 +9,7 @@ import dbus_objects.types as our_types
 
 
 def dbus_method(
-    interface: Optional[str] = '',
+    interface: Optional[str] = None,
     name: Optional[str] = None,
     return_names: Sequence[str] = [],
     multiple_returns: bool = False,
