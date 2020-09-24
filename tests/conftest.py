@@ -2,15 +2,14 @@
 
 import pytest
 
-from dbus_objects.integration.jeepney.blocking import DBusServer
+from dbus_objects.integration.jeepney import BlockingDBusServer
 from dbus_objects.object import DBusObject, dbus_method
 from dbus_objects.types import MultipleReturn
 
 
 class ExampleObject(DBusObject):
     def __init__(self):
-        super().__init__()
-        self.server_name = 'com.example.object'
+        super().__init__(default_interface_root='com.example.object')
 
     @dbus_method()
     def example_method(self) -> str:
@@ -44,7 +43,7 @@ def obj_methods(obj):
 
 @pytest.fixture(params=['SESSION'])
 def server(request):
-    server = DBusServer(request.param, 'com.example.object')
+    server = BlockingDBusServer(request.param, 'com.example.object')
 
     yield server
 

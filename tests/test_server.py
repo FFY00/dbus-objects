@@ -3,7 +3,7 @@
 import jeepney.wrappers
 import pytest
 
-from dbus_objects.integration.jeepney.blocking import DBusServer
+from dbus_objects.integration.jeepney import BlockingDBusServer
 
 
 def test_create(server):
@@ -12,4 +12,4 @@ def test_create(server):
 
 def test_create_error():
     with pytest.raises(jeepney.wrappers.DBusErrorResponse):
-        DBusServer(bus='SESSION', name='org.freedesktop.DBus')
+        BlockingDBusServer(bus='SESSION', name='org.freedesktop.DBus')
