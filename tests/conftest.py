@@ -2,7 +2,7 @@
 
 import pytest
 
-from dbus_objects.integration.jeepney import BlockingDBusServer
+from dbus_objects.integration import DBusServerBase
 from dbus_objects.object import DBusObject, dbus_method
 from dbus_objects.types import MultipleReturn
 
@@ -41,10 +41,11 @@ def obj_methods(obj):
     return obj.get_dbus_methods()
 
 
-@pytest.fixture(params=['SESSION'])
-def server(request):
-    server = BlockingDBusServer(request.param, 'com.example.object')
-
+@pytest.fixture()
+def base_server(obj):
+    server = DBusServerBase(
+        bus='SESSION',
+        name='io.github.ffy00.dbus-objects.tests'
+    )
+    server.register_object('/io/github/ffy00/dbus_objects/example', obj)
     yield server
-
-    server.close()
