@@ -26,15 +26,17 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         '''
         super().__init__(bus, name)
         self.__logger = logging.getLogger(self.__class__.__name__)
-        self._conn = jeepney.integrate.blocking.connect_and_authenticate(self._bus)
 
         self._dbus = jeepney.bus_messages.DBus()
-
-        self._conn.send_and_get_reply(self._dbus.RequestName(self._name))
-        self._conn.router.on_unhandled = self._handle_msg
+        self._conn_start()
 
     def __del__(self) -> None:
         self.close()  # pragma: no cover
+
+    def _conn_start(self) -> None:
+        self._conn = jeepney.integrate.blocking.connect_and_authenticate(self._bus)
+        self._conn.send_and_get_reply(self._dbus.RequestName(self._name))
+        self._conn.router.on_unhandled = self._handle_msg
 
     def _handle_msg(self, msg: jeepney.low_level.Message) -> None:
         if msg.header.message_type == jeepney.low_level.MessageType.method_call:
@@ -98,7 +100,11 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         self.__logger.info('started listening...')
         try:
             while event is None or event.is_set():
-                self._conn.recv_messages()
+                try:
+                    self._conn.recv_messages()
+                except ConnectionResetError:
+                    self.__logger.debug('connection reset abruptly, restarting...')
+                    self._conn_start()
                 time.sleep(delay)
         except KeyboardInterrupt:
             self.__logger.info('exiting...')
