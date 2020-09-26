@@ -2,9 +2,7 @@
 
 import typing
 
-
-if typing.TYPE_CHECKING:
-    import dbus_objects.signature
+import dbus_objects.signature
 
 
 Byte = typing.TypeVar('Byte', int, int)
