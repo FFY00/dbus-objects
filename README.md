@@ -61,38 +61,28 @@ paths
 ├── /
 │   ├── org.freedesktop.DBus.Introspectable
 │   │   └── Introspect
-│   ├── org.freedesktop.DBus.Peer
-│   │   └── Ping
-│   └── org.freedesktop.DBus.Properties
-│       └── GetAll
+│   └── org.freedesktop.DBus.Peer
+│       └── Ping
 ├── /io
 │   ├── org.freedesktop.DBus.Introspectable
 │   │   └── Introspect
-│   ├── org.freedesktop.DBus.Peer
-│   │   └── Ping
-│   └── org.freedesktop.DBus.Properties
-│       └── GetAll
+│   └── org.freedesktop.DBus.Peer
+│       └── Ping
 ├── /io/github
 │   ├── org.freedesktop.DBus.Introspectable
 │   │   └── Introspect
-│   ├── org.freedesktop.DBus.Peer
-│   │   └── Ping
-│   └── org.freedesktop.DBus.Properties
-│       └── GetAll
+│   └── org.freedesktop.DBus.Peer
+│       └── Ping
 ├── /io/github/ffy00
 │   ├── org.freedesktop.DBus.Introspectable
 │   │   └── Introspect
-│   ├── org.freedesktop.DBus.Peer
-│   │   └── Ping
-│   └── org.freedesktop.DBus.Properties
-│       └── GetAll
+│   └── org.freedesktop.DBus.Peer
+│       └── Ping
 ├── /io/github/ffy00/dbus_objects
 │   ├── org.freedesktop.DBus.Introspectable
 │   │   └── Introspect
-│   ├── org.freedesktop.DBus.Peer
-│   │   └── Ping
-│   └── org.freedesktop.DBus.Properties
-│       └── GetAll
+│   └── org.freedesktop.DBus.Peer
+│       └── Ping
 └── /io/github/ffy00/dbus_objects/example
     ├── io.github.ffy00.dbus_objects.example.ExampleObject
     │   ├── GetBets
@@ -106,7 +96,9 @@ paths
     ├── org.freedesktop.DBus.Peer
     │   └── Ping
     └── org.freedesktop.DBus.Properties
-        └── GetAll
+        ├── Get
+        ├── GetAll
+        └── Set
 ```
 
 And, for eg., the following DBus introspection XML for `/io/github/ffy00/dbus_objects/example`:
