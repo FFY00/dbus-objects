@@ -52,7 +52,7 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
                     msg.header.fields[jeepney.low_level.HeaderFields.interface],
                     msg.header.fields[jeepney.low_level.HeaderFields.member]
                 )
-                return  # TODO: optionally log to the console
+                return
 
             # TODO: verify signature (inc. types)
             return_args = method(*msg.body)
