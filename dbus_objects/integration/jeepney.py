@@ -42,6 +42,7 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
             for key, value in msg.header.fields.items():
                 self.__logger.debug(f'\t{jeepney.low_level.HeaderFields(key).name} = {value}')
 
+            # TODO: validate fields are in msg
             try:
                 method = self._get_method(
                     msg.header.fields[jeepney.low_level.HeaderFields.path],
