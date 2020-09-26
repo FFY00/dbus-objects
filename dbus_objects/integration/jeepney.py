@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: MIT
 
 import logging
+import multiprocessing
 import time
+
+from typing import Union
 
 import jeepney.bus_messages
 import jeepney.integrate.blocking
@@ -69,13 +72,13 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
     def close(self) -> None:
         self._conn.close()
 
-    def listen(self, delay: float = 0.01) -> None:
+    def listen(self, delay: float = 0.01, event: Union[bool, multiprocessing.Event] = True) -> None:
         self.__logger.debug('server topology:')
         for line in self._tree.show(stdout=False).splitlines():
             self.__logger.debug('\t' + line)
         self.__logger.info('started listening...')
         try:
-            while True:
+            while event.is_set():
                 self._conn.recv_messages()
                 time.sleep(delay)
         except KeyboardInterrupt:
