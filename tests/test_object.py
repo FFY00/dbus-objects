@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: MIT
 
+import pytest
+
+from dbus_objects.object import DBusObject, DBusObjectException, dbus_method
+
 
 def test_dbus_object(obj):
     assert obj.is_dbus_object
@@ -36,3 +40,13 @@ def test_signature_multiple_return(obj_methods):
             assert method.dbus_signature.output == 'ii'
             return
     assert False  # pragma: no cover
+
+
+def test_no_interface():
+    class TestObject(DBusObject):
+        @dbus_method()
+        def method() -> None:
+            pass  # pragma: no cover
+
+    with pytest.raises(DBusObjectException):
+        list(TestObject().get_dbus_methods())
