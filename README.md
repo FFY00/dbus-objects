@@ -154,13 +154,6 @@ And, for eg., the following DBus introspection XML for `/io/github/ffy00/dbus_ob
 </node>
 ```
 
-### Dependencies
-
-- [treelib](https://github.com/caesar0301/treelib)
-
-Tests:
-  - [pytest](https://github.com/pytest-dev/pytest)
-
 
 ### License
 
