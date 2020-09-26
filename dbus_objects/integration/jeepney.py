@@ -58,14 +58,32 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
                 )
                 return
 
-            # TODO: verify signature (inc. types)
-            return_args = method(*msg.body)
+            if jeepney.low_level.HeaderFields.signature in msg.header.fields:
+                msg_sig = msg.header.fields[jeepney.low_level.HeaderFields.signature]
+            else:
+                msg_sig = ''
 
-            return_msg = jeepney.wrappers.new_method_return(
-                msg,
-                method.dbus_signature.output,
-                (return_args,) if return_args is not None else tuple()
-            )
+            if method.dbus_signature.input != msg_sig:
+                self.__logger.debug(
+                    'got invalid signature, was expecting '
+                    f'{method.dbus_signature.input} but got {msg_sig}'
+                )
+                return_msg = jeepney.wrappers.new_error(
+                    msg, 'Client Error', 's',
+                    tuple([f'Invalid signature, expected {method.dbus_signature.input}'])
+                )
+            else:
+                try:
+                    return_args = method(*msg.body)
+                except Exception as e:
+                    return_msg = jeepney.wrappers.new_error(msg, type(e).__name__, 's', tuple([str(e)]))
+                else:
+                    return_msg = jeepney.wrappers.new_method_return(
+                        msg,
+                        method.dbus_signature.output,
+                        (return_args,) if return_args is not None else tuple()
+                    )
+
             self._conn.send_message(return_msg)
         else:
             self.__logger.info(f'Unhandled message: {msg} / {msg.header} / {msg.header.fields}')
