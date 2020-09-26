@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 import typing
+import xml.etree.ElementTree as ET
 
 import pytest
 
@@ -10,59 +11,80 @@ from dbus_objects.object import DBusObject, DBusObjectException
 from dbus_objects.signature import DBusSignature
 
 
-def test_signature():
-    assert DBusSignature._type_signature(str) == 's'
-    assert DBusSignature._type_signature(int) == 'i'
-    assert DBusSignature._type_signature(float) == 'd'
-    assert DBusSignature._type_signature(dbus_objects.types.Byte) == 'y'
-    assert DBusSignature._type_signature(dbus_objects.types.UInt16) == 'q'
-    assert DBusSignature._type_signature(dbus_objects.types.UInt32) == 'u'
-    assert DBusSignature._type_signature(dbus_objects.types.UInt64) == 't'
-    assert DBusSignature._type_signature(dbus_objects.types.Int16) == 'n'
-    assert DBusSignature._type_signature(dbus_objects.types.Int32) == 'i'
-    assert DBusSignature._type_signature(dbus_objects.types.Int64) == 'x'
-    assert DBusSignature._type_signature(DBusObject) == 'o'
-    assert DBusSignature._type_signature(typing.List[int]) == 'ai'
-    assert DBusSignature._type_signature(typing.Dict[str, int]) == 'a{si}'
-    assert DBusSignature._type_signature(typing.Tuple[str, int]) == '(si)'
-    assert DBusSignature._type_signature(typing.List[typing.Tuple[int, int]]) == 'a(ii)'
-    assert DBusSignature._type_signature(typing.List[typing.List[int]]) == 'aai'
-    assert DBusSignature._type_signature(typing.List[typing.List[DBusObject]]) == 'aao'
-    assert DBusSignature._type_signature(typing.Tuple[int, typing.Tuple[int, int]]) == '(i(ii))'
-    assert DBusSignature._type_signature(typing.Dict[str, str]) == 'a{ss}'
-    assert DBusSignature._type_signature(typing.Dict[int, str]) == 'a{is}'
-    assert DBusSignature._type_signature(typing.Dict[str, typing.Tuple[int, int]]) == 'a{s(ii)}'
-    assert DBusSignature._type_signature(typing.Dict[str, typing.Dict[str, str]]) == 'a{sa{ss}}'
-    '''
-    assert DBusSignature._type_signature_from_list([
-        dbus_objects.types.Byte,
-        dbus_objects.types.Byte,
-        dbus_objects.types.Byte,
-        dbus_objects.types.Byte,
-        dbus_objects.types.UInt32,
-        dbus_objects.types.UInt32,
-        typing.List[typing.Tuple[dbus_objects.types.Byte, dbus_objects.types.Byte]]
-    ]) == 'yyyyuua(yy)'
+@pytest.mark.parametrize(
+    ('types', 'signature'),
+    [
+        (str, 's'),
+        (int, 'i'),
+        (float, 'd'),
+        (dbus_objects.types.Byte, 'y'),
+        (dbus_objects.types.UInt16, 'q'),
+        (dbus_objects.types.UInt32, 'u'),
+        (dbus_objects.types.UInt64, 't'),
+        (dbus_objects.types.Int16, 'n'),
+        (dbus_objects.types.Int32, 'i'),
+        (dbus_objects.types.Int64, 'x'),
+        (DBusObject, 'o'),
+        (typing.List[int], 'ai'),
+        (typing.Dict[str, int], 'a{si}'),
+        (typing.Tuple[str, int], '(si)'),
+        (typing.List[typing.Tuple[int, int]], 'a(ii)'),
+        (typing.List[typing.List[int]], 'aai'),
+        (typing.List[typing.List[DBusObject]], 'aao'),
+        (typing.Tuple[int, typing.Tuple[int, int]], '(i(ii))'),
+        (typing.Dict[str, str], 'a{ss}'),
+        (typing.Dict[int, str], 'a{is}'),
+        (typing.Dict[str, typing.Tuple[int, int]], 'a{s(ii)}'),
+        (typing.Dict[str, typing.Dict[str, str]], 'a{sa{ss}}'),
+    ],
+)
+def test_signature(subtests, types, signature):
+    def method() -> types:
+        pass  # pragma: no cover
+
+    method_sig = DBusSignature(method, 'method', skip_first_argument=False)
+
+    with subtests.test(msg='DBus signature'):
+        assert method_sig.output == signature
+
+    with subtests.test(msg='DBus signature'):
+        assert (
+            ET.tostring(method_sig.xml).decode() ==
+            f'<method name="Method"><arg direction="out" type="{signature}" /></method>'
+        )
+
+
+def test_signature_error():
     with pytest.raises(DBusObjectException):
-        DBusSignature._type_signature_from_list(object)
-    '''
+        DBusSignature._type_signature(complex)
 
 
-def test_dbus_case():
-    assert DBusSignature.dbus_case('my_snake_case_string') == 'MySnakeCaseString'
-    assert DBusSignature.dbus_case('some_string') == 'SomeString'
-    assert DBusSignature.dbus_case('hope_this_works') == 'HopeThisWorks'
-    assert DBusSignature.dbus_case('LetsNotBreakCamelCase') == 'LetsNotBreakCamelCase'
-    assert DBusSignature.dbus_case('HumBetterNotBreak') == 'HumBetterNotBreak'
-    assert DBusSignature.dbus_case('almostThere') == 'AlmostThere'
-    assert DBusSignature.dbus_case('_oh_no') == 'OhNo'
-    assert DBusSignature.dbus_case('__oh_oh_no') == 'OhOhNo'
-    assert DBusSignature.dbus_case('_oh__oh__oh_no') == 'OhOhOhNo'
-    assert DBusSignature.dbus_case('hello1') == 'Hello1'
-    assert DBusSignature.dbus_case('a_b_c') == 'ABC'
+@pytest.mark.parametrize(
+    ('input', 'output'),
+    [
+        ('my_snake_case_string', 'MySnakeCaseString'),
+        ('some_string', 'SomeString'),
+        ('hope_this_works', 'HopeThisWorks'),
+        ('LetsNotBreakCamelCase', 'LetsNotBreakCamelCase'),
+        ('HumBetterNotBreak', 'HumBetterNotBreak'),
+        ('almostThere', 'AlmostThere'),
+        ('_oh_no', 'OhNo'),
+        ('__oh_oh_no', 'OhOhNo'),
+        ('_oh__oh__oh_no', 'OhOhOhNo'),
+        ('hello1', 'Hello1'),
+        ('a_b_c', 'ABC'),
+    ]
+)
+def test_dbus_case(input, output):
+    def method() -> None:
+        pass  # pragma: no cover
+
+    method_sig = DBusSignature(method, input, skip_first_argument=False)
+
+    assert method_sig.name == output
 
 
-def test_get_dbus_signature():
+def test_parameters():
     def method1(arg: typing.Dict[str, typing.Dict[str, str]]):
         pass  # pragma: no cover
 
@@ -72,17 +94,33 @@ def test_get_dbus_signature():
     def method3(arg: typing.Dict[int, str]) -> typing.Dict[int, str]:
         pass  # pragma: no cover
 
-    sig = DBusSignature(method1, 'Method1', skip_first_argument=False)
+    def method4(self, arg: typing.Dict[str, typing.Dict[str, str]]) -> int:
+        pass  # pragma: no cover
+
+    sig = DBusSignature(method1, 'method1', skip_first_argument=False)
     assert sig.input == 'a{sa{ss}}'
     assert sig.output == ''
+    # assert sig.input_names == ['arg']
 
-    sig = DBusSignature(method2, 'Method2', skip_first_argument=False)
+    sig = DBusSignature(method2, 'method2', skip_first_argument=False)
     assert sig.input == ''
     assert sig.output == 'aao'
+    assert sig.input_names == []
 
-    sig = DBusSignature(method3, 'Method3', skip_first_argument=False)
+    sig = DBusSignature(method3, 'method3', skip_first_argument=False)
     assert sig.input == 'a{is}'
     assert sig.output == 'a{is}'
+    # assert sig.input_names == ['arg']
+
+    sig = DBusSignature(
+        method4,
+        'method4',
+        skip_first_argument=True,
+        return_names=['ret']
+    )
+    assert sig.input == 'a{sa{ss}}'
+    assert sig.output == 'i'
+    assert sig.input_names == ['arg']
 
 
 def test_get_dbus_sigature_no_annotations():
@@ -90,4 +128,4 @@ def test_get_dbus_sigature_no_annotations():
         pass  # pragma: no cover
 
     with pytest.raises(DBusObjectException):
-        DBusSignature(method, 'Method', skip_first_argument=False)
+        DBusSignature(method, 'method', skip_first_argument=False)
