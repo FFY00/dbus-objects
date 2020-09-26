@@ -17,7 +17,7 @@ def test_call(obj_methods):
         if method.dbus_signature.name == 'ExampleMethod':
             assert method() == 'test'
             return
-    assert False
+    assert False  # pragma: no cover
 
 
 def test_signature(obj_methods):
@@ -26,7 +26,7 @@ def test_signature(obj_methods):
             assert method.dbus_signature.input == ''
             assert method.dbus_signature.output == 's'
             return
-    assert False
+    assert False  # pragma: no cover
 
 
 def test_signature_multiple_return(obj_methods):
@@ -35,4 +35,4 @@ def test_signature_multiple_return(obj_methods):
             assert method.dbus_signature.input == 's'
             assert method.dbus_signature.output == 'ii'
             return
-    assert False
+    assert False  # pragma: no cover
