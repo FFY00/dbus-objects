@@ -2,6 +2,7 @@
 
 import inspect
 import itertools
+import sys
 import typing
 import xml.etree.ElementTree as ET
 
@@ -9,6 +10,12 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence
 
 import dbus_objects.object
 import dbus_objects.types
+
+
+if sys.version_info < (3, 8):
+    import typing_extensions
+    typing.get_args = typing_extensions.get_args
+    typing.get_origin = typing_extensions.get_origin
 
 
 class DBusSignature():

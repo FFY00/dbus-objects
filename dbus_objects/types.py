@@ -1,8 +1,15 @@
 # SPDX-License-Identifier: MIT
 
+import sys
 import typing
 
 import dbus_objects.signature
+
+
+if sys.version_info < (3, 8):
+    import typing_extensions
+    typing.Literal = typing_extensions.Literal
+    typing.Protocol = typing_extensions.Protocol
 
 
 Byte = typing.TypeVar('Byte', int, int)
