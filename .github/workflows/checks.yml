@@ -47,6 +47,7 @@ jobs:
       - name: Run flake8
         run: flake8 --show-source --statistics dbus_objects
 
+
   isort:
     runs-on: ubuntu-latest
     steps:
