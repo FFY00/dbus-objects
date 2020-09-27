@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: MIT
 
-import textwrap
-
 import pytest
+import xmldiff.main
 
 import dbus_objects
 
@@ -43,12 +42,12 @@ def test_introspectable(base_server):
         'Introspect',
     )
 
-    assert interospect() == textwrap.dedent('''
-    <!DOCTYPE node PUBLIC
-    "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
-    "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" >
-    <node xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd"><interface name="org.freedesktop.DBus.Peer"><method name="Ping" /></interface><interface name="org.freedesktop.DBus.Introspectable"><method name="Introspect"><arg direction="out" type="s" name="xml" /></method></interface><node name="example" /></node>
-    ''').strip()  # noqa: E501
+    assert not xmldiff.main.diff_texts(interospect(), '''
+        <!DOCTYPE node PUBLIC
+        "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+        "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" >
+        <node xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd"><interface name="org.freedesktop.DBus.Peer"><method name="Ping" /></interface><interface name="org.freedesktop.DBus.Introspectable"><method name="Introspect"><arg direction="out" type="s" name="xml" /></method></interface><node name="example" /></node>
+    ''')  # noqa: E501
 
 
 def test_peer(base_server):
