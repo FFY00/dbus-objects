@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import sys
 import typing
 
@@ -30,7 +32,7 @@ MultipleReturn = typing.Tuple  # type: ignore
 class DBusMethod(typing.Protocol):
     is_dbus_method: typing.Literal[True]
     dbus_interface: typing.Optional[str]
-    dbus_signature: 'dbus_objects.signature.DBusSignature'
+    dbus_signature: dbus_objects.signature.DBusSignature
     dbus_parameters: typing.Dict[str, str]  # name -> signature
     dbus_return_names: typing.List[str]
     __call__: typing.Callable[..., typing.Any]
