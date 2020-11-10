@@ -4,6 +4,7 @@ import multiprocessing
 import time
 
 import jeepney
+import jeepney.io.blocking
 import pytest
 
 from dbus_objects.integration import DBusServerBase
@@ -95,5 +96,5 @@ def jeepney_client():
 
 @pytest.fixture(scope='session')
 def jeepney_connection():
-    with jeepney.integrate.blocking.connect_and_authenticate(bus='SESSION') as connection:
+    with jeepney.io.blocking.open_dbus_connection(bus='SESSION') as connection:
         yield connection

@@ -7,7 +7,7 @@ import time
 from typing import Optional
 
 import jeepney.bus_messages
-import jeepney.integrate.blocking
+import jeepney.io.blocking
 import jeepney.low_level
 import jeepney.wrappers
 
@@ -34,9 +34,8 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         self.close()  # pragma: no cover
 
     def _conn_start(self) -> None:
-        self._conn = jeepney.integrate.blocking.connect_and_authenticate(self._bus)
-        self._conn.send_and_get_reply(self._dbus.RequestName(self._name))
-        self._conn.router.on_unhandled = self._handle_msg
+        self._conn = jeepney.io.blocking.open_dbus_connection(self._bus)
+        jeepney.io.blocking.Proxy(self._dbus, self._conn).RequestName(self._name)
 
     def _handle_msg(self, msg: jeepney.low_level.Message) -> None:
         if msg.header.message_type == jeepney.low_level.MessageType.method_call:
@@ -101,10 +100,12 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         try:
             while event is None or event.is_set():
                 try:
-                    self._conn.recv_messages()
+                    msg = self._conn.receive()
                 except ConnectionResetError:
                     self.__logger.debug('connection reset abruptly, restarting...')
                     self._conn_start()
+                else:
+                    self._handle_msg(msg)
                 time.sleep(delay)
         except KeyboardInterrupt:
             self.__logger.info('exiting...')
