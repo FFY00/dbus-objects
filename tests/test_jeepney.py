@@ -1,15 +1,13 @@
 # SPDX-License-Identifier: MIT
 
 import jeepney
-import jeepney.integrate.blocking
-import jeepney.wrappers
 import pytest
 
 from dbus_objects.integration.jeepney import BlockingDBusServer
 
 
 def test_create_error():
-    with pytest.raises(jeepney.wrappers.DBusErrorResponse):
+    with pytest.raises(jeepney.DBusErrorResponse):
         BlockingDBusServer(bus='SESSION', name='org.freedesktop.DBus')
 
 

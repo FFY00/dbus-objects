@@ -6,10 +6,8 @@ import time
 
 from typing import Optional
 
-import jeepney.bus_messages
+import jeepney
 import jeepney.io.blocking
-import jeepney.low_level
-import jeepney.wrappers
 
 import dbus_objects.integration
 
@@ -27,7 +25,7 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         super().__init__(bus, name)
         self.__logger = logging.getLogger(self.__class__.__name__)
 
-        self._dbus = jeepney.bus_messages.DBus()
+        self._dbus = jeepney.DBus()
         self._conn_start()
 
     def __del__(self) -> None:
@@ -37,30 +35,30 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         self._conn = jeepney.io.blocking.open_dbus_connection(self._bus)
         jeepney.io.blocking.Proxy(self._dbus, self._conn).RequestName(self._name)
 
-    def _handle_msg(self, msg: jeepney.low_level.Message) -> None:
-        if msg.header.message_type == jeepney.low_level.MessageType.method_call:
+    def _handle_msg(self, msg: jeepney.Message) -> None:
+        if msg.header.message_type == jeepney.MessageType.method_call:
             self.__logger.debug(f'received message {msg.header.message_type}')
             for key, value in msg.header.fields.items():
-                self.__logger.debug(f'\t{jeepney.low_level.HeaderFields(key).name} = {value}')
+                self.__logger.debug(f'\t{jeepney.HeaderFields(key).name} = {value}')
 
             # TODO: validate fields are in msg
             try:
                 method = self._get_method(
-                    msg.header.fields[jeepney.low_level.HeaderFields.path],
-                    msg.header.fields[jeepney.low_level.HeaderFields.interface],
-                    msg.header.fields[jeepney.low_level.HeaderFields.member],
+                    msg.header.fields[jeepney.HeaderFields.path],
+                    msg.header.fields[jeepney.HeaderFields.interface],
+                    msg.header.fields[jeepney.HeaderFields.member],
                 )
             except KeyError:
                 self.__logger.info(
                     'Method not found:',
-                    msg.header.fields[jeepney.low_level.HeaderFields.path],
-                    msg.header.fields[jeepney.low_level.HeaderFields.interface],
-                    msg.header.fields[jeepney.low_level.HeaderFields.member]
+                    msg.header.fields[jeepney.HeaderFields.path],
+                    msg.header.fields[jeepney.HeaderFields.interface],
+                    msg.header.fields[jeepney.HeaderFields.member]
                 )
                 return
 
-            if jeepney.low_level.HeaderFields.signature in msg.header.fields:
-                msg_sig = msg.header.fields[jeepney.low_level.HeaderFields.signature]
+            if jeepney.HeaderFields.signature in msg.header.fields:
+                msg_sig = msg.header.fields[jeepney.HeaderFields.signature]
             else:
                 msg_sig = ''
 
@@ -69,7 +67,7 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
                     'got invalid signature, was expecting '
                     f'{method.dbus_signature.input} but got {msg_sig}'
                 )
-                return_msg = jeepney.wrappers.new_error(
+                return_msg = jeepney.new_error(
                     msg, 'Client Error', 's',
                     tuple([f'Invalid signature, expected {method.dbus_signature.input}'])
                 )
@@ -77,9 +75,9 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
                 try:
                     return_args = method(*msg.body)
                 except Exception as e:
-                    return_msg = jeepney.wrappers.new_error(msg, type(e).__name__, 's', tuple([str(e)]))
+                    return_msg = jeepney.new_error(msg, type(e).__name__, 's', tuple([str(e)]))
                 else:
-                    return_msg = jeepney.wrappers.new_method_return(
+                    return_msg = jeepney.new_method_return(
                         msg,
                         method.dbus_signature.output,
                         (return_args,) if return_args is not None else tuple()
