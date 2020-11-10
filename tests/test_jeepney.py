@@ -16,4 +16,4 @@ def test_create_error():
 def test_listen(jeepney_one_time_server, jeepney_client, jeepney_connection):
     msg = jeepney.new_method_call(jeepney_client, 'Ping', '', tuple())
     reply = jeepney_connection.send_and_get_reply(msg)
-    assert reply[0] == 'Pong!'
+    assert reply.body[0] == 'Pong!'
