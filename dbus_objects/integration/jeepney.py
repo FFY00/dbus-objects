@@ -19,6 +19,8 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
 
     def __init__(self, bus: str, name: str) -> None:
         '''
+        Blocking DBus server built on top of Jeepney
+
         :param bus: DBus bus (hint: usually SESSION or SYSTEM)
         :param name: DBus name
         '''
@@ -32,10 +34,18 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         self.close()  # pragma: no cover
 
     def _conn_start(self) -> None:
+        '''
+        Start DBus connection
+        '''
         self._conn = jeepney.io.blocking.open_dbus_connection(self._bus)
         jeepney.io.blocking.Proxy(self._dbus, self._conn).RequestName(self._name)
 
     def _handle_msg(self, msg: jeepney.Message) -> None:
+        '''
+        Handle message
+
+        :param msg: message to handle
+        '''
         if msg.header.message_type == jeepney.MessageType.method_call:
             self.__logger.debug(f'received message {msg.header.message_type}')
             for key, value in msg.header.fields.items():
@@ -88,9 +98,18 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
             self.__logger.info(f'Unhandled message: {msg} / {msg.header} / {msg.header.fields}')
 
     def close(self) -> None:
+        '''
+        Close the DBus connection
+        '''
         self._conn.close()
 
     def listen(self, delay: float = 0.01, event: Optional[threading.Event] = None) -> None:
+        '''
+        Start listening and handling messages
+
+        :param delay: loop delay
+        :param event: event which can be activated to stop listening
+        '''
         self.__logger.debug('server topology:')
         for line in self._tree.show(stdout=False).splitlines():
             self.__logger.debug('\t' + line)

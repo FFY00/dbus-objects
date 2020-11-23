@@ -15,6 +15,9 @@ import dbus_objects.object
 import dbus_objects.types
 
 
+# These few following classes implement the standard interfaces
+
+
 class _Introspectable(dbus_objects.object.DBusObject):
     '''
     https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-introspectable
@@ -107,6 +110,12 @@ class _Properties(dbus_objects.object.DBusObject):
 class DBusServerBase():
     def __init__(self, bus: str, name: str) -> None:
         '''
+        DBus server base
+
+        Implements the object registration and method storage logic.
+        Subclasses can use _get_method to fetch the method they want to
+        dispatch.
+
         :param bus: DBus bus (hint: usually SESSION or SYSTEM)
         :param name: DBus name
         '''
@@ -119,15 +128,31 @@ class DBusServerBase():
 
     @property
     def name(self) -> str:
+        '''
+        DBus name
+        '''
         return self._name
 
     def _get_path_node(self, path: str) -> treelib.Node:
+        '''
+        Fetches the path
+
+        :param path: path
+        '''
         if self._tree.contains(path):
             return self._tree.get_node(path)
         else:
             return self._tree.create_node(identifier=path, parent=self._paths)
 
     def _get_interface_node(self, path: str, interface: str, create: bool = False) -> treelib.Node:
+        '''
+        Fetches the interface for given path and interface name. Optionally
+        creates it if not found.
+
+        :param path: interface path
+        :param interface: interface name
+        :param create: whether to create the interface or not if missing
+        '''
         path_node = self._get_path_node(path)
         for node in self._tree.children(path):
             if node.tag == interface:
@@ -135,6 +160,13 @@ class DBusServerBase():
         return self._tree.create_node(interface, parent=path_node,)
 
     def _get_method(self, path: str, interface: str, method: str) -> dbus_objects.types.DBusMethod:
+        '''
+        Fetches the method for given path, interface and method name
+
+        :param path: method path
+        :param interface: method interface
+        :param interface: method name
+        '''
         if self._tree.contains(path):
             # search for interfaces (2nd level)
             for interface_node in self._tree.children(path):
@@ -152,6 +184,14 @@ class DBusServerBase():
         obj: dbus_objects.object.DBusObject,
         ignore_warn: bool = False
     ) -> None:
+        '''
+        Low level object registration logic
+
+        :param path: object path
+        :param obj: object
+        :param ignore_warn: ignores the duplicated object warning, you want to
+                            set this when registering the standard interfaces
+        '''
         for method in obj.get_dbus_methods():
             if not method.dbus_interface:
                 raise ValueError('Method has no DBus interface')
@@ -170,6 +210,12 @@ class DBusServerBase():
                 self._tree.create_node(method.dbus_signature.name, data=method, parent=interface_node)
 
     def register_object(self, path: str, obj: dbus_objects.object.DBusObject) -> None:
+        '''
+        Registers the object into the server
+
+        :param path: object path
+        :param obj: object
+        '''
         self.__logger.debug(f'registering {obj.dbus_name} in {path}')
         # TODO: validate paths, interfaces and method names
         self._register_object(path, obj)
