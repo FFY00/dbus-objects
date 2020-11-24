@@ -53,7 +53,7 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
 
             # TODO: validate fields are in msg
             try:
-                method, descriptor = self._get_method(
+                method, descriptor = self.get_method(
                     msg.header.fields[jeepney.HeaderFields.path],
                     msg.header.fields[jeepney.HeaderFields.interface],
                     msg.header.fields[jeepney.HeaderFields.member],
