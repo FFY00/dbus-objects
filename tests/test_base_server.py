@@ -36,7 +36,7 @@ def test_register_object_duplicate(obj):
 
 
 def test_introspectable(base_server):
-    introspect, _descriptor = base_server._get_method(
+    introspect, _descriptor = base_server.get_method(
         '/io/github/ffy00/dbus_objects',
         'org.freedesktop.DBus.Introspectable',
         'Introspect',
@@ -51,7 +51,7 @@ def test_introspectable(base_server):
 
 
 def test_peer(base_server):
-    ping, _descriptor = base_server._get_method(
+    ping, _descriptor = base_server.get_method(
         '/io/github/ffy00/dbus_objects/example',
         'org.freedesktop.DBus.Peer',
         'Ping',
@@ -61,17 +61,17 @@ def test_peer(base_server):
 
 
 def test_properties(base_server):
-    get, _descriptor_get = base_server._get_method(
+    get, _descriptor_get = base_server.get_method(
         '/io/github/ffy00/dbus_objects/example',
         'org.freedesktop.DBus.Properties',
         'Get',
     )
-    set_, _descriptor_set = base_server._get_method(
+    set_, _descriptor_set = base_server.get_method(
         '/io/github/ffy00/dbus_objects/example',
         'org.freedesktop.DBus.Properties',
         'Set',
     )
-    get_all, _descriptor_get_all = base_server._get_method(
+    get_all, _descriptor_get_all = base_server.get_method(
         '/io/github/ffy00/dbus_objects/example',
         'org.freedesktop.DBus.Properties',
         'GetAll',

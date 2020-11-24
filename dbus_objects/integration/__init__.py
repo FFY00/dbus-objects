@@ -7,7 +7,7 @@ import typing
 import warnings
 import xml.etree.ElementTree as ET
 
-from typing import Dict
+from typing import Any, Dict
 
 import treelib
 
@@ -112,44 +112,23 @@ class _Properties(dbus_objects.object.DBusObject):
 # TODO: org.freedesktop.DBus.ObjectManager
 
 
-class DBusServerBase():
-    def __init__(self, bus: str, name: str) -> None:
-        '''
-        DBus server base
+class _DBusTree(treelib.Tree):  # type: ignore
+    def __init__(self) -> None:
+        super().__init__()
+        self._paths = self.create_node(identifier='paths')
 
-        Implements the object registration and method storage logic.
-        Subclasses can use _get_method to fetch the method they want to
-        dispatch.
-
-        :param bus: DBus bus (hint: usually SESSION or SYSTEM)
-        :param name: DBus name
-        '''
-        self.__logger = logging.getLogger(self.__class__.__name__)
-        self._bus = bus
-        self._name = name
-
-        self._tree = treelib.Tree()
-        self._paths = self._tree.create_node(identifier='paths')
-
-    @property
-    def name(self) -> str:
-        '''
-        DBus name
-        '''
-        return self._name
-
-    def _get_path_node(self, path: str) -> treelib.Node:
+    def get_path_node(self, path: str) -> treelib.Node:
         '''
         Fetches the path
 
         :param path: path
         '''
-        if self._tree.contains(path):
-            return self._tree.get_node(path)
+        if self.contains(path):
+            return self.get_node(path)
         else:
-            return self._tree.create_node(identifier=path, parent=self._paths)
+            return self.create_node(identifier=path, parent=self._paths)
 
-    def _get_interface_node(self, path: str, interface: str, create: bool = False) -> treelib.Node:
+    def get_interface_node(self, path: str, interface: str, create: bool = False) -> treelib.Node:
         '''
         Fetches the interface for given path and interface name. Optionally
         creates it if not found.
@@ -158,13 +137,57 @@ class DBusServerBase():
         :param interface: interface name
         :param create: whether to create the interface or not if missing
         '''
-        path_node = self._get_path_node(path)
-        for node in self._tree.children(path):
+        path_node = self.get_path_node(path)
+        for node in self.children(path):
             if node.tag == interface:
                 return node
-        return self._tree.create_node(interface, parent=path_node,)
+        return self.create_node(interface, parent=path_node,)
 
-    def _get_method(self, path: str, interface: str, method: str) -> dbus_objects.object._DBusMethodTuple:
+    def get_element(self, path: str, interface: str, name: str) -> Any:
+        '''
+        Fetches the element for given path, interface and element name
+
+        :param path: element path
+        :param interface: element interface
+        :param interface: element name
+        '''
+        if self.contains(path):
+            # search for interfaces (2nd level)
+            for interface_node in self.children(path):
+                if interface_node.tag == interface:
+                    # search for methods (3rd level)
+                    for method_node in self.children(interface_node.identifier):
+                        if method_node.tag == name:
+                            return method_node.data
+                    break  # right interface but didn't find the method
+        raise KeyError(f'Element not found: path={path} interface={interface} name={name}')
+
+
+class DBusServerBase():
+    def __init__(self, bus: str, name: str) -> None:
+        '''
+        DBus server base
+
+        Implements the object registration and method storage logic.
+        Subclasses can use get_method to fetch the method they want to
+        dispatch.
+
+        :param bus: DBus bus (hint: usually SESSION or SYSTEM)
+        :param name: DBus name
+        '''
+        self.__logger = logging.getLogger(self.__class__.__name__)
+        self._bus = bus
+        self._name = name
+        self._tree = _DBusTree()
+
+    @property
+    def name(self) -> str:
+        '''
+        DBus name
+        '''
+        return self._name
+
+    def get_method(self, path: str, interface: str, method: str) -> dbus_objects.object._DBusMethodTuple:
         '''
         Fetches the method for given path, interface and method name
 
@@ -172,19 +195,32 @@ class DBusServerBase():
         :param interface: method interface
         :param interface: method name
         '''
-        if self._tree.contains(path):
-            # search for interfaces (2nd level)
-            for interface_node in self._tree.children(path):
-                if interface_node.tag == interface:
-                    # search for methods (3rd level)
-                    for method_node in self._tree.children(interface_node.identifier):
-                        if method_node.tag == method:
-                            return typing.cast(
-                                dbus_objects.object._DBusMethodTuple,
-                                method_node.data
-                            )
-                    break  # right interface but didn't find the method
-        raise KeyError(f'Method not found: path={path} interface={interface} method={method}')
+        return typing.cast(
+            dbus_objects.object._DBusMethodTuple,
+            self._tree.get_element(path, interface, method)
+        )
+
+    def _register_element(
+        self,
+        path: str,
+        interface: str,
+        name: str,
+        data: Any,
+        ignore_warn: bool,
+    ) -> None:
+        interface_node = self._tree.get_interface_node(path, interface)
+        for node in self._tree.children(interface_node.identifier):
+            if node.tag == name:
+                if not ignore_warn:
+                    warnings.warn(
+                        f'Element already registered! '
+                        f'path={path} '
+                        f'interface={interface} '
+                        f'name={name} '
+                    )
+                break
+        else:  # no break
+            self._tree.create_node(name, data=data, parent=interface_node)
 
     def _register_object(
         self,
@@ -203,23 +239,13 @@ class DBusServerBase():
         for method, descriptor in obj.get_dbus_methods():
             if not descriptor.interface:
                 raise ValueError('Method has no DBus interface')
-            interface_node = self._get_interface_node(path, descriptor.interface)
-            for node in self._tree.children(interface_node.identifier):
-                if node.tag == descriptor.name:
-                    if not ignore_warn:
-                        warnings.warn(
-                            'Object already registered! '
-                            f'path={path} '
-                            f'interface={descriptor.interface} '
-                            f'method={descriptor.name} '
-                        )
-                    break
-            else:  # no break
-                self._tree.create_node(
-                    descriptor.name,
-                    data=(method, descriptor),
-                    parent=interface_node
-                )
+            self._register_element(
+                path,
+                descriptor.interface,
+                descriptor.name,
+                (method, descriptor),
+                ignore_warn,
+            )
 
     def register_object(self, path: str, obj: dbus_objects.object.DBusObject) -> None:
         '''
