@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
 
+import xml.etree.ElementTree as ET
+
 import pytest
 
 from dbus_objects.object import DBusObject, DBusObjectException, dbus_method
@@ -54,5 +56,16 @@ def test_property(obj_properties):
             assert descriptor.signature == 's'
             setter('something else')
             assert getter() == 'something else'
+            return
+    assert False  # pragma: no cover
+
+
+def test_xml(obj_methods):
+    for _method, descriptor in obj_methods:
+        if descriptor.name == 'ExampleMethod':
+            assert ET.tostring(descriptor.xml).decode() == (
+                '<method name="ExampleMethod"><arg direction="out" '
+                f'type="{descriptor.signature[1]}" /></method>'
+            )
             return
     assert False  # pragma: no cover

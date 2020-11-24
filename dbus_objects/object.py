@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 import types
 import xml.etree.ElementTree as ET
 
@@ -28,10 +29,12 @@ class _DBusMethodBase():
         self._func = func
         self._interface_orig = interface
         self._interface = self._interface_orig
-        self._name = name
+        self._given_name = name
+        self._name: Optional[str] = None
         self._return_names = return_names or []
         self._multiple_returns = multiple_returns
-        self._signature: Optional[dbus_objects.signature.DBusSignature] = None
+        self._input_signature: Optional[dbus_objects.signature.DBusSignature] = None
+        self._output_signature: Optional[dbus_objects.signature.DBusSignature] = None
         self._list_name: Optional[str] = None
 
     @property
@@ -42,15 +45,32 @@ class _DBusMethodBase():
 
     @property
     def name(self) -> str:
-        if not self._signature:
-            raise ValueError("Signature hasn't been set yet")
-        return self._signature.name
+        if not self._name:
+            raise ValueError("Name hasn't been set yet")
+        return self._name
 
     @property
     def xml(self) -> ET.Element:
-        if not self._signature:
+        if not self._input_signature or not self._output_signature:
             raise ValueError("Signature hasn't been set yet")
-        return self._signature.xml
+
+        xml = ET.Element('method', {'name': self.name})
+
+        for direction, signature, names in (
+            ('in', list(self._input_signature), self._input_signature.names or []),
+            ('out', list(self._output_signature), self._output_signature.names or []),
+        ):
+            for name, sig in itertools.zip_longest(names, signature):
+                data = {
+                    'direction': direction,
+                    'type': sig,
+                }
+                if name:
+                    data['name'] = name
+                ET.SubElement(xml, 'arg', data)
+
+        # TODO: export documentation
+        return xml
 
     def __set_name__(self, obj_type: Any, name: str) -> None:
         if not issubclass(obj_type, DBusObject):
@@ -59,20 +79,28 @@ class _DBusMethodBase():
             )
         self._owner = obj_type
         self._descriptor_name = name
+
         # get name
+        self._name = self._given_name
         if not self._name:
             self._name = self._func.__name__
-        # get signature
-        self._signature = dbus_objects.signature.DBusSignature(
+        self._name = dbus_objects.signature.dbus_case(self._name)
+
+        # get signatures
+        self._input_signature = dbus_objects.signature.DBusSignature.from_parameters(
             self._func,
-            self._name,
-            self._multiple_returns,
-            self._return_names,
         )
+        self._output_signature = dbus_objects.signature.DBusSignature.from_return(
+            self._func,
+            self._return_names,
+            self._multiple_returns,
+        )
+
         # get the method list for our type and initialize it if necessary
         assert self._list_name
         self._method_list = getattr(self._owner, self._list_name) or []
         setattr(self._owner, self._list_name, self._method_list)
+
         # add ourselves to the owner method list
         self._method_list.append((self._descriptor_name, self))
 
@@ -105,9 +133,9 @@ class _DBusMethod(_DBusMethodBase):
 
     @property
     def signature(self) -> Tuple[str, str]:
-        if not self._signature:
+        if not self._input_signature or not self._output_signature:
             raise ValueError("Signature hasn't been set yet")
-        return self._signature.input, self._signature.output
+        return str(self._input_signature), str(self._output_signature)
 
 
 class _DBusProperty(_DBusMethodBase):
@@ -132,9 +160,9 @@ class _DBusProperty(_DBusMethodBase):
 
     @property
     def signature(self) -> str:
-        if not self._signature:
+        if not self._output_signature:
             raise ValueError("Signature hasn't been set yet")
-        return self._signature.output
+        return str(self._output_signature)
 
     def __get__(self, obj: Any, obj_type: Any = None) -> Any:
         if obj is None:
@@ -234,7 +262,7 @@ class DBusObject():
         :param name: DBus object name
         '''
         self.is_dbus_object = True
-        self._dbus_name = dbus_objects.signature.DBusSignature.dbus_case(
+        self._dbus_name = dbus_objects.signature.dbus_case(
             name if name else type(self).__name__
         )
         self.default_interface_root = default_interface_root
