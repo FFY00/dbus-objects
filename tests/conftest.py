@@ -9,13 +9,14 @@ import pytest
 
 from dbus_objects.integration import DBusServerBase
 from dbus_objects.integration.jeepney import BlockingDBusServer
-from dbus_objects.object import DBusObject, dbus_method
+from dbus_objects.object import DBusObject, dbus_method, dbus_property
 from dbus_objects.types import MultipleReturn
 
 
 class ExampleObject(DBusObject):
     def __init__(self):
         super().__init__(default_interface_root='com.example.object')
+        self._property = 'some property'
 
     @dbus_method()
     def example_method(self) -> str:
@@ -36,6 +37,14 @@ class ExampleObject(DBusObject):
     def multiple(self, msg: str) -> MultipleReturn[int, int]:
         print(msg)  # pragma: no cover
 
+    @dbus_property()
+    def prop(self) -> str:
+        return self._property
+
+    @prop.setter
+    def prop(self, value: str):
+        self._property = value
+
 
 @pytest.fixture(scope='session')
 def obj():
@@ -45,6 +54,11 @@ def obj():
 @pytest.fixture()
 def obj_methods(obj):
     return obj.get_dbus_methods()
+
+
+@pytest.fixture()
+def obj_properties(obj):
+    return obj.get_dbus_properties()
 
 
 @pytest.fixture()

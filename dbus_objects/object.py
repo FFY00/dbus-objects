@@ -1,11 +1,162 @@
 # SPDX-License-Identifier: MIT
 
-import typing
+from __future__ import annotations
 
-from typing import Any, Callable, Generator, Optional, Sequence
+import types
+import xml.etree.ElementTree as ET
+
+from typing import Any, Callable, Generator, List, Optional, Sequence, Tuple
 
 import dbus_objects.signature
-import dbus_objects.types as our_types
+
+
+class _DBusMethodBase():
+    '''
+    Base descriptor class that implements DBus interface objects
+
+    Having a descriptor class allows us to save data on the method owner and
+    allows us to easily implement things like properties.
+    '''
+    def __init__(
+        self,
+        func: Callable[..., Any],
+        interface: Optional[str] = None,
+        name: Optional[str] = None,
+        return_names: Optional[Sequence[str]] = None,
+        multiple_returns: bool = False,
+    ) -> None:
+        self._func = func
+        self._interface_orig = interface
+        self._interface = self._interface_orig
+        self._name = name
+        self._return_names = return_names or []
+        self._multiple_returns = multiple_returns
+        self._signature: Optional[dbus_objects.signature.DBusSignature] = None
+        self._list_name: Optional[str] = None
+
+    @property
+    def interface(self) -> str:
+        if not self._interface:
+            raise ValueError("Interface hasn't been set yet")
+        return self._interface
+
+    @property
+    def name(self) -> str:
+        if not self._signature:
+            raise ValueError("Signature hasn't been set yet")
+        return self._signature.name
+
+    @property
+    def xml(self) -> ET.Element:
+        if not self._signature:
+            raise ValueError("Signature hasn't been set yet")
+        return self._signature.xml
+
+    def __set_name__(self, obj_type: Any, name: str) -> None:
+        if not issubclass(obj_type, DBusObject):
+            raise DBusObjectException(
+                f'The {self.__class__.__name__} decorator can only be used inside DBusObject'
+            )
+        self._owner = obj_type
+        self._descriptor_name = name
+        # get name
+        if not self._name:
+            self._name = self._func.__name__
+        # get signature
+        self._signature = dbus_objects.signature.DBusSignature(
+            self._func,
+            self._name,
+            self._multiple_returns,
+            self._return_names,
+        )
+        # get the method list for our type and initialize it if necessary
+        assert self._list_name
+        self._method_list = getattr(self._owner, self._list_name) or []
+        setattr(self._owner, self._list_name, self._method_list)
+        # add ourselves to the owner method list
+        self._method_list.append((self._descriptor_name, self))
+
+    def __get__(self, obj: Any, obj_type: Any = None) -> Any:
+        if obj is None:
+            return self._func
+        # construct interface from obj
+        if not self._interface_orig:
+            if obj.default_interface_root:
+                self._interface = '.'.join([obj.default_interface_root, obj._dbus_name])
+            else:
+                raise DBusObjectException(f'Missing interface in DBus method: {self.name}')
+        return types.MethodType(self._func, obj)
+
+
+class _DBusMethod(_DBusMethodBase):
+    '''
+    Descriptor class that implements a DBus method
+    '''
+    def __init__(
+        self,
+        func: Callable[..., Any],
+        interface: Optional[str] = None,
+        name: Optional[str] = None,
+        return_names: Optional[Sequence[str]] = None,
+        multiple_returns: bool = False,
+    ) -> None:
+        super().__init__(func, interface, name, return_names, multiple_returns)
+        self._list_name = '_dbus_methods'
+
+    @property
+    def signature(self) -> Tuple[str, str]:
+        if not self._signature:
+            raise ValueError("Signature hasn't been set yet")
+        return self._signature.input, self._signature.output
+
+
+class _DBusProperty(_DBusMethodBase):
+    '''
+    Descriptor class that implements a DBus property
+
+    Works like a simpler :meth:`property`
+    '''
+    def __init__(
+        self,
+        func: Callable[..., Any],
+        interface: Optional[str] = None,
+        name: Optional[str] = None,
+        return_names: Optional[Sequence[str]] = None,
+        multiple_returns: bool = False,
+    ) -> None:
+        super().__init__(func, interface, name, return_names, multiple_returns)
+        self._list_name = '_dbus_properties'
+        self._setter: Optional[Callable[[Any, Any], Any]] = None
+        # TODO: Verify signature
+        # TODO: Allow emiting a signal when the value changes
+
+    @property
+    def signature(self) -> str:
+        if not self._signature:
+            raise ValueError("Signature hasn't been set yet")
+        return self._signature.output
+
+    def __get__(self, obj: Any, obj_type: Any = None) -> Any:
+        if obj is None:
+            return self._func(obj)
+        return self._func(obj)
+
+    def __set__(self, obj: Any, value: Any) -> None:
+        if self._setter is None:
+            raise AttributeError(f'{self._descriptor_name} has no setter')
+        self._setter(obj, value)
+
+    def setter(self, value: Callable[[Any, Any], Any]) -> _DBusProperty:
+        '''
+        Decorator that registers the method as the property setter
+
+        Works just like the built-in :meth:`property`
+        '''
+        self._setter = value
+        return self
+
+
+# TODO: _DBusSignal
 
 
 def dbus_method(
@@ -13,12 +164,12 @@ def dbus_method(
     name: Optional[str] = None,
     return_names: Optional[Sequence[str]] = None,
     multiple_returns: bool = False,
-) -> Callable[[Callable[..., Any]], our_types.DBusMethod]:
+) -> Callable[[Callable[..., Any]], _DBusMethod]:
     '''
-    Exports a function as a DBus method
+    This decorator exports a function as a DBus method
 
     The function must have type annotations, they will be used to resolve the
-    method sigature.
+    method signature.
 
     The function name will be used as the DBus method name unless otherwise
     specified in the arguments.
@@ -28,27 +179,41 @@ def dbus_method(
     :param return_names: Names of the return arguments
     :param multiple_returns: Returns multiple parameters
     '''
-    if not return_names:
-        return_names = []
-
-    def decorator(func: Callable[..., Any]) -> our_types.DBusMethod:
-        method_name = name
-        if not method_name:
-            method_name = func.__name__
-
-        dbus_method_func = typing.cast(our_types.DBusMethod, func)
-
-        dbus_method_func.is_dbus_method = True
-        dbus_method_func.dbus_interface = interface
-        dbus_method_func.dbus_signature = dbus_objects.signature.DBusSignature(
-            func,
-            method_name,
-            multiple_returns,
-            return_names,
-        )
-
-        return dbus_method_func
+    def decorator(func: Callable[..., Any]) -> _DBusMethod:
+        return _DBusMethod(func, interface, name, return_names, multiple_returns)
     return decorator
+
+
+def dbus_property(
+    interface: Optional[str] = None,
+    name: Optional[str] = None,
+    return_names: Optional[Sequence[str]] = None,
+    multiple_returns: bool = False,
+) -> Callable[[Callable[..., Any]], _DBusProperty]:
+    '''
+    This decorator exports a method as a DBus property
+
+    Works just like :meth:`dbus_method` and :meth:`property`
+
+    :param interface: DBus interface name
+    :param name: DBus method name
+    :param return_names: Names of the return arguments
+    :param multiple_returns: Returns multiple parameters
+    '''
+    def decorator(func: Callable[..., Any]) -> _DBusProperty:
+        return _DBusProperty(func, interface, name, return_names, multiple_returns)
+    return decorator
+
+
+_DBusMethodTupleInternal = Tuple[str, _DBusMethod]  # method name, method descriptor
+_DBusMethodTuple = Tuple[Callable[..., Any], _DBusMethod]  # method, method descriptor
+
+_DBusPropertyTupleInternal = Tuple[str, _DBusProperty]  # property name, property descriptor
+_DBusPropertyTuple = Tuple[
+    Callable[[], Any],
+    Callable[[Any], Any],
+    _DBusProperty
+]  # getter, setter, descriptor
 
 
 class DBusObject():
@@ -57,6 +222,9 @@ class DBusObject():
     DBus methods, you must define typed functions with the
     :meth:`dbus_objects.object.dbus_object` decorator.
     '''
+    # type -> method name list
+    _dbus_methods: Optional[List[_DBusMethodTupleInternal]] = None
+    _dbus_properties: Optional[List[_DBusPropertyTupleInternal]] = None
 
     def __init__(self, name: Optional[str] = None, default_interface_root: Optional[str] = None):
         '''
@@ -75,22 +243,27 @@ class DBusObject():
     def dbus_name(self) -> str:
         return self._dbus_name
 
-    def get_dbus_methods(self) -> Generator[our_types.DBusMethod, our_types.DBusMethod, None]:
+    def get_dbus_methods(self) -> Generator[_DBusMethodTuple, _DBusMethodTuple, None]:
         '''
-        Returns a dictionary of the DBus methods. The key holds the DBus method
-        name and the value holds a reference to the function.
+        Generator that provides the DBus methods
         '''
-        for attr in dir(self):
-            obj = getattr(self, attr)
-            if getattr(obj, 'is_dbus_method', False):
-                method = typing.cast(our_types.DBusMethod, obj)
-                if not method.__dict__['dbus_interface']:
-                    if self.default_interface_root:
-                        interface = '.'.join([self.default_interface_root, self._dbus_name])
-                    else:
-                        raise DBusObjectException(f"Missing interface in DBus method '{method.dbus_signature.name}'")
-                    method.__dict__['dbus_interface'] = interface  # hack! please let me know if you have a better solution
-                yield method
+        if not self._dbus_methods:
+            return
+        for method_name, descriptor in self._dbus_methods:
+            yield getattr(self, method_name), descriptor
+
+    def get_dbus_properties(self) -> Generator[_DBusPropertyTuple, _DBusPropertyTuple, None]:
+        '''
+        Generator that provides the DBus properties
+        '''
+        if not self._dbus_properties:
+            return
+        for property_name, descriptor in self._dbus_properties:
+            yield (
+                lambda: getattr(self, property_name),
+                lambda value: setattr(self, property_name, value),
+                descriptor,
+            )
 
 
 class DBusObjectException(Exception):

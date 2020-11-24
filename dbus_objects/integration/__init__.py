@@ -48,7 +48,8 @@ class _Introspectable(dbus_objects.object.DBusObject):
         for node in self._tree.children(self._path):
             interface = ET.SubElement(xml, 'interface', {'name': node.tag})
             for method_node in self._tree.children(node.identifier):
-                interface.append(method_node.data.dbus_signature.xml)
+                method, descriptor = method_node.data
+                interface.append(descriptor.xml)
 
         # add nodes (subpaths)
         for node in self._tree.children('paths'):
@@ -81,11 +82,12 @@ class _Properties(dbus_objects.object.DBusObject):
     '''
     https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-properties
     '''
-    def __init__(self) -> None:
+    def __init__(self, obj: dbus_objects.object.DBusObject) -> None:
         super().__init__(
             name='Properties',
             default_interface_root='org.freedesktop.DBus',
         )
+        self._obj = obj
 
     @dbus_objects.object.dbus_method()
     def get(self, interface_name: str, property_name: str) -> dbus_objects.types.Variant:
@@ -99,7 +101,10 @@ class _Properties(dbus_objects.object.DBusObject):
 
     @dbus_objects.object.dbus_method()
     def get_all(self, interface_name: str) -> Dict[str, dbus_objects.types.Variant]:
-        return {}
+        return {
+            descriptor.name: (descriptor.signature, getter())
+            for getter, setter, descriptor in self._obj.get_dbus_properties()
+        }
 
     # TODO: PropertiesChanged
 
@@ -159,7 +164,7 @@ class DBusServerBase():
                 return node
         return self._tree.create_node(interface, parent=path_node,)
 
-    def _get_method(self, path: str, interface: str, method: str) -> dbus_objects.types.DBusMethod:
+    def _get_method(self, path: str, interface: str, method: str) -> dbus_objects.object._DBusMethodTuple:
         '''
         Fetches the method for given path, interface and method name
 
@@ -174,7 +179,10 @@ class DBusServerBase():
                     # search for methods (3rd level)
                     for method_node in self._tree.children(interface_node.identifier):
                         if method_node.tag == method:
-                            return typing.cast(dbus_objects.types.DBusMethod, method_node.data)
+                            return typing.cast(
+                                dbus_objects.object._DBusMethodTuple,
+                                method_node.data
+                            )
                     break  # right interface but didn't find the method
         raise KeyError(f'Method not found: path={path} interface={interface} method={method}')
 
@@ -192,22 +200,26 @@ class DBusServerBase():
         :param ignore_warn: ignores the duplicated object warning, you want to
                             set this when registering the standard interfaces
         '''
-        for method in obj.get_dbus_methods():
-            if not method.dbus_interface:
+        for method, descriptor in obj.get_dbus_methods():
+            if not descriptor.interface:
                 raise ValueError('Method has no DBus interface')
-            interface_node = self._get_interface_node(path, method.dbus_interface)
+            interface_node = self._get_interface_node(path, descriptor.interface)
             for node in self._tree.children(interface_node.identifier):
-                if node.tag == method.dbus_signature.name:
+                if node.tag == descriptor.name:
                     if not ignore_warn:
                         warnings.warn(
                             'Object already registered! '
                             f'path={path} '
-                            f'interface={method.dbus_interface} '
-                            f'method={method.dbus_signature.name} '
+                            f'interface={descriptor.interface} '
+                            f'method={descriptor.name} '
                         )
                     break
             else:  # no break
-                self._tree.create_node(method.dbus_signature.name, data=method, parent=interface_node)
+                self._tree.create_node(
+                    descriptor.name,
+                    data=(method, descriptor),
+                    parent=interface_node
+                )
 
     def register_object(self, path: str, obj: dbus_objects.object.DBusObject) -> None:
         '''
@@ -219,7 +231,7 @@ class DBusServerBase():
         self.__logger.debug(f'registering {obj.dbus_name} in {path}')
         # TODO: validate paths, interfaces and method names
         self._register_object(path, obj)
-        self._register_object(path, _Properties(), ignore_warn=True)
+        self._register_object(path, _Properties(obj), ignore_warn=True)
         do = True
         while do:
             self._register_object(path, _Peer(), ignore_warn=True)

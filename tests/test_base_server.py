@@ -36,13 +36,13 @@ def test_register_object_duplicate(obj):
 
 
 def test_introspectable(base_server):
-    interospect = base_server._get_method(
+    introspect, _descriptor = base_server._get_method(
         '/io/github/ffy00/dbus_objects',
         'org.freedesktop.DBus.Introspectable',
         'Introspect',
     )
 
-    assert not xmldiff.main.diff_texts(interospect(), '''
+    assert not xmldiff.main.diff_texts(introspect(), '''
         <!DOCTYPE node PUBLIC
         "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
         "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" >
@@ -51,7 +51,7 @@ def test_introspectable(base_server):
 
 
 def test_peer(base_server):
-    ping = base_server._get_method(
+    ping, _descriptor = base_server._get_method(
         '/io/github/ffy00/dbus_objects/example',
         'org.freedesktop.DBus.Peer',
         'Ping',
@@ -61,17 +61,17 @@ def test_peer(base_server):
 
 
 def test_properties(base_server):
-    get = base_server._get_method(
+    get, _descriptor_get = base_server._get_method(
         '/io/github/ffy00/dbus_objects/example',
         'org.freedesktop.DBus.Properties',
         'Get',
     )
-    set_ = base_server._get_method(
+    set_, _descriptor_set = base_server._get_method(
         '/io/github/ffy00/dbus_objects/example',
         'org.freedesktop.DBus.Properties',
         'Set',
     )
-    get_all = base_server._get_method(
+    get_all, _descriptor_get_all = base_server._get_method(
         '/io/github/ffy00/dbus_objects/example',
         'org.freedesktop.DBus.Properties',
         'GetAll',
@@ -79,4 +79,6 @@ def test_properties(base_server):
 
     assert get('interface', 'property') == ('', None)
     assert set_('interface', 'property', 'value') is None
-    assert get_all('interface') == {}
+    assert get_all('interface') == {
+        'Prop': ('s', 'some property'),
+    }

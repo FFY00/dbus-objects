@@ -18,6 +18,7 @@ class ExampleObject(dbus_objects.object.DBusObject):
     def __init__(self):
         super().__init__(default_interface_root='io.github.ffy00.dbus_objects.example')
         self._bets = []
+        self._name = 'something'
 
     @dbus_objects.object.dbus_method()
     def ping(self) -> str:
@@ -44,6 +45,14 @@ class ExampleObject(dbus_objects.object.DBusObject):
         winner = random.choice(self._bets)
         self._bets = []
         return winner
+
+    @dbus_objects.object.dbus_property()
+    def name(self) -> str:
+        return self._name
+
+    @name.setter
+    def name(self, value: str):
+        self._name = value
 
 
 server = dbus_objects.integration.jeepney.BlockingDBusServer(
