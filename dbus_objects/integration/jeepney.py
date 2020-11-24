@@ -53,7 +53,7 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
 
             # TODO: validate fields are in msg
             try:
-                method = self._get_method(
+                method, descriptor = self._get_method(
                     msg.header.fields[jeepney.HeaderFields.path],
                     msg.header.fields[jeepney.HeaderFields.interface],
                     msg.header.fields[jeepney.HeaderFields.member],
@@ -72,14 +72,16 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
             else:
                 msg_sig = ''
 
-            if method.dbus_signature.input != msg_sig:
+            signature_input, signature_output = descriptor.signature
+
+            if signature_input != msg_sig:
                 self.__logger.debug(
                     'got invalid signature, was expecting '
-                    f'{method.dbus_signature.input} but got {msg_sig}'
+                    f'{signature_input} but got {msg_sig}'
                 )
                 return_msg = jeepney.new_error(
                     msg, 'Client Error', 's',
-                    tuple([f'Invalid signature, expected {method.dbus_signature.input}'])
+                    tuple([f'Invalid signature, expected {signature_input}'])
                 )
             else:
                 try:
@@ -89,7 +91,7 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
                 else:
                     return_msg = jeepney.new_method_return(
                         msg,
-                        method.dbus_signature.output,
+                        signature_output,
                         (return_args,) if return_args is not None else tuple()
                     )
 
