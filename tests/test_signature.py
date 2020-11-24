@@ -1,14 +1,13 @@
 # SPDX-License-Identifier: MIT
 
 import typing
-import xml.etree.ElementTree as ET
 
 import pytest
 
 import dbus_objects.types
 
 from dbus_objects.object import DBusObject, DBusObjectException
-from dbus_objects.signature import DBusSignature
+from dbus_objects.signature import DBusSignature, dbus_case
 
 
 @pytest.mark.parametrize(
@@ -42,16 +41,9 @@ def test_signature(subtests, types, signature):
     def method() -> types:
         pass  # pragma: no cover
 
-    method_sig = DBusSignature(method, 'method', skip_first_argument=False)
+    method_sig = DBusSignature.from_return(method)
 
-    with subtests.test(msg='DBus signature'):
-        assert method_sig.output == signature
-
-    with subtests.test(msg='DBus signature'):
-        assert (
-            ET.tostring(method_sig.xml).decode() ==
-            f'<method name="Method"><arg direction="out" type="{signature}" /></method>'
-        )
+    assert str(method_sig) == signature
 
 
 def test_signature_error():
@@ -76,12 +68,7 @@ def test_signature_error():
     ]
 )
 def test_dbus_case(input, output):
-    def method() -> None:
-        pass  # pragma: no cover
-
-    method_sig = DBusSignature(method, input, skip_first_argument=False)
-
-    assert method_sig.name == output
+    assert dbus_case(input) == output
 
 
 def test_parameters():
@@ -97,30 +84,29 @@ def test_parameters():
     def method4(self, arg: typing.Dict[str, typing.Dict[str, str]]) -> int:
         pass  # pragma: no cover
 
-    sig = DBusSignature(method1, 'method1', skip_first_argument=False)
-    assert sig.input == 'a{sa{ss}}'
-    assert sig.output == ''
-    # assert sig.input_names == ['arg']
+    in_sig = DBusSignature.from_parameters(method1, skip_first_argument=False)
+    out_sig = DBusSignature.from_return(method1)
+    assert str(in_sig) == 'a{sa{ss}}'
+    assert str(out_sig) == ''
+    # assert in_sig.names == ['arg']
 
-    sig = DBusSignature(method2, 'method2', skip_first_argument=False)
-    assert sig.input == ''
-    assert sig.output == 'aao'
-    assert sig.input_names == []
+    in_sig = DBusSignature.from_parameters(method2)
+    out_sig = DBusSignature.from_return(method2)
+    assert str(in_sig) == ''
+    assert str(out_sig) == 'aao'
+    assert in_sig.names == []
 
-    sig = DBusSignature(method3, 'method3', skip_first_argument=False)
-    assert sig.input == 'a{is}'
-    assert sig.output == 'a{is}'
-    # assert sig.input_names == ['arg']
+    in_sig = DBusSignature.from_parameters(method3, skip_first_argument=False)
+    out_sig = DBusSignature.from_return(method3)
+    assert str(in_sig) == 'a{is}'
+    assert str(out_sig) == 'a{is}'
+    assert in_sig.names == ['arg']
 
-    sig = DBusSignature(
-        method4,
-        'method4',
-        skip_first_argument=True,
-        return_names=['ret']
-    )
-    assert sig.input == 'a{sa{ss}}'
-    assert sig.output == 'i'
-    assert sig.input_names == ['arg']
+    in_sig = DBusSignature.from_parameters(method4)
+    out_sig = DBusSignature.from_return(method4, return_names=['ret'])
+    assert str(in_sig) == 'a{sa{ss}}'
+    assert str(out_sig) == 'i'
+    assert in_sig.names == ['arg']
 
 
 def test_get_dbus_sigature_no_annotations():
@@ -128,4 +114,4 @@ def test_get_dbus_sigature_no_annotations():
         pass  # pragma: no cover
 
     with pytest.raises(DBusObjectException):
-        DBusSignature(method, 'method', skip_first_argument=False)
+        DBusSignature.from_parameters(method, skip_first_argument=False)

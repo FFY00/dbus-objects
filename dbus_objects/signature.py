@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import inspect
-import itertools
 import sys
 import typing
-import xml.etree.ElementTree as ET
 
-from typing import Any, Callable, Iterable, List, Optional, Sequence
+from typing import Any, Callable, Iterable, Iterator, List, Optional, Sequence, Type
 
 import dbus_objects.object
 import dbus_objects.types
@@ -21,93 +21,68 @@ if sys.version_info < (3, 8):
 class DBusSignature():
     def __init__(
         self,
-        func: Callable[..., Any],
-        name: str,
-        multiple_returns: bool = False,
-        return_names: Optional[Sequence[str]] = None,
-        skip_first_argument: bool = True,
+        annotations: Sequence[Type[Any]],
+        names: Optional[Sequence[str]]
     ) -> None:
-        '''
-        Gets the DBus signature from a function
+        self._list = self._get_signatures(annotations)
+        self._names = names
 
-        :param func: target function
-        :param skip_first_argument: skips the first argument (for use with class methods)
-        :returns:
-            - input_signature
-            - output_signature
-        '''
-        self._func = func
-        self._name = self.dbus_case(name)
-        self._return_names = return_names
+    def __iter__(self) -> Iterator[Any]:
+        return iter(self._list)
+
+    def __str__(self) -> str:
+        return ''.join(self._list)
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}({str(self)})'
+
+    @property
+    def names(self) -> Optional[Sequence[str]]:
+        return self._names
+
+    @classmethod
+    def from_parameters(
+        cls,
+        func: Callable[..., Any],
+        skip_first_argument: bool = True,
+    ) -> DBusSignature:
         sig = inspect.signature(func)
-
         args = sig.parameters.copy()  # type: ignore
-        ret = sig.return_annotation
 
+        # remove self if it is a class method
         if skip_first_argument and args:
             args.popitem(last=False)
 
-        for key, value in args.items():
+        for name, value in args.items():
             if value.annotation is value.empty:
-                raise dbus_objects.object.DBusObjectException(f"Argument '{key}' is missing a type annotation")
+                raise dbus_objects.object.DBusObjectException(
+                    f'Argument is missing a type annotation: {name} ({func})'
+                )
 
-        # contruct signature list
-        self._in_sigs = self._get_signatures(arg.annotation for arg in args.values())
+        return cls(
+            [arg.annotation for arg in args.values()],
+            [name for name in args],
+        )
 
+    @classmethod
+    def from_return(
+        cls,
+        func: Callable[..., Any],
+        return_names: Optional[Sequence[str]] = None,
+        multiple_returns: bool = False,
+    ) -> DBusSignature:
+        sig = inspect.signature(func)
+        ret = sig.return_annotation
+
+        annotations: List[Type[Any]]
         if not ret or ret is sig.empty:
-            self._out_sigs = []
+            annotations = []
         elif multiple_returns:
-            self._out_sigs = self._get_signatures(typing.get_args(ret))
+            annotations = list(typing.get_args(ret))
         elif ret:
-            self._out_sigs = [self._type_signature(ret)]
+            annotations = [ret]
 
-        # contruct signature string
-        self._in = ''.join(self._in_sigs)
-        self._out = ''.join(self._out_sigs)
-
-        self._build_xml()
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def input(self) -> str:
-        return self._in
-
-    @property
-    def output(self) -> str:
-        return self._out
-
-    @property
-    def input_names(self) -> List[str]:
-        sig = inspect.signature(self._func)
-
-        args = sig.parameters.copy()  # type: ignore
-        if args:
-            args.popitem(last=False)
-
-        return list(name for name in args)
-
-    @property
-    def output_names(self) -> Sequence[str]:
-        return self._return_names or []
-
-    @staticmethod
-    def dbus_case(text: str) -> str:
-        '''
-        Converts text to the DBus object capitalization (camel case with the first
-        letter capitalized)
-
-        :param text: text to convert
-        '''
-        def capitalize(text: str) -> str:
-            if not text:
-                return ''
-            if len(text) == 1:
-                return text.upper()
-            return text[0].upper() + text[1:]
-        return ''.join(capitalize(word) for word in text.split('_'))
+        return cls(annotations, return_names)
 
     @classmethod
     def _type_signature(cls, typ: type) -> str:  # noqa: C901
@@ -163,24 +138,18 @@ class DBusSignature():
 
         return signature
 
-    @property
-    def xml(self) -> ET.Element:
-        return self._xml
 
-    def _build_xml(self) -> None:
-        self._xml = ET.Element('method', {'name': self.name})
+def dbus_case(text: str) -> str:
+    '''
+    Converts text to the DBus object capitalization (camel case with the first
+    letter capitalized)
 
-        for direction, signature, names in (
-            ('in', self._in_sigs, self.input_names),
-            ('out', self._out_sigs, self.output_names),
-        ):
-            for name, sig in itertools.zip_longest(names, signature):
-                data = {
-                    'direction': direction,
-                    'type': sig,
-                }
-                if name:
-                    data['name'] = name
-                ET.SubElement(self._xml, 'arg', data)
-
-        # TODO: export documentation
+    :param text: text to convert
+    '''
+    def capitalize(text: str) -> str:
+        if not text:
+            return ''
+        if len(text) == 1:
+            return text.upper()
+        return text[0].upper() + text[1:]
+    return ''.join(capitalize(word) for word in text.split('_'))
