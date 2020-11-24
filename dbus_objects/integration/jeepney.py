@@ -87,6 +87,10 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
                 try:
                     return_args = method(*msg.body)
                 except Exception as e:
+                    self.__logger.error(
+                        f'An exception ocurred when try to call method: {descriptor.name}',
+                        exc_info=True
+                    )
                     return_msg = jeepney.new_error(msg, type(e).__name__, 's', tuple([str(e)]))
                 else:
                     return_msg = jeepney.new_method_return(
