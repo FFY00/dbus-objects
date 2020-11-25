@@ -7,7 +7,7 @@ import typing
 import warnings
 import xml.etree.ElementTree as ET
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import treelib
 
@@ -28,35 +28,55 @@ class _Introspectable(dbus_objects.object.DBusObject):
     "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" >
     ''')
 
-    def __init__(self, path: str, dbus_tree: treelib.Tree):
+    def __init__(
+        self,
+        path: str,
+        method_tree: Optional[treelib.Tree] = None,
+        property_tree: Optional[treelib.Tree] = None,
+    ):
         '''
         :param path: path where the onject is being resgistered
-        :param dbus_tree: DBus server tree
+        :param method_tree: DBus server method tree
         '''
         super().__init__(
             name='Introspectable',
             default_interface_root='org.freedesktop.DBus',
         )
         self._path = path
-        self._tree = dbus_tree
+        self._method_tree = method_tree
+        self._property_tree = property_tree
 
     @dbus_objects.object.dbus_method(return_names=('xml',))
-    def introspect(self) -> str:
+    def introspect(self) -> str:  # noqa: C901
         xml = ET.Element('node', {'xmlns:doc': 'http://www.freedesktop.org/dbus/1.0/doc.dtd'})
+        interfaces: Dict[str, ET.Element] = {}
+
+        def get_interface(name: str) -> ET.Element:
+            if name not in interfaces:
+                interfaces[name] = ET.SubElement(xml, 'interface', {'name': name})
+            return interfaces[name]
 
         # add interfaces
-        for node in self._tree.children(self._path):
-            interface = ET.SubElement(xml, 'interface', {'name': node.tag})
-            for method_node in self._tree.children(node.identifier):
-                method, descriptor = method_node.data
-                interface.append(descriptor.xml)
+        if self._method_tree and self._path in self._method_tree:
+            for node in self._method_tree.children(self._path):
+                interface = get_interface(node.tag)
+                for method_node in self._method_tree.children(node.identifier):
+                    method, descriptor = method_node.data
+                    interface.append(descriptor.xml)
+        if self._property_tree and self._path in self._property_tree:
+            for node in self._property_tree.children(self._path):
+                interface = get_interface(node.tag)
+                for property_node in self._property_tree.children(node.identifier):
+                    getter, setter, descriptor = property_node.data
+                    interface.append(descriptor.xml)
 
         # add nodes (subpaths)
-        for node in self._tree.children('paths'):
-            if node.identifier == self._path or self._path.startswith(node.identifier):
-                continue
-            if os.path.dirname(node.identifier) == self._path:
-                ET.SubElement(xml, 'node', {'name': os.path.basename(node.identifier)})
+        if self._method_tree:
+            for node in self._method_tree.children('paths'):
+                if node.identifier == self._path or self._path.startswith(node.identifier):
+                    continue
+                if os.path.dirname(node.identifier) == self._path:
+                    ET.SubElement(xml, 'node', {'name': os.path.basename(node.identifier)})
 
         return self._XML_DOCTYPE + ET.tostring(xml).decode()
 
@@ -178,7 +198,8 @@ class DBusServerBase():
         self.__logger = logging.getLogger(self.__class__.__name__)
         self._bus = bus
         self._name = name
-        self._tree = _DBusTree()
+        self._method_tree = _DBusTree()
+        self._property_tree = _DBusTree()
 
     @property
     def name(self) -> str:
@@ -197,19 +218,33 @@ class DBusServerBase():
         '''
         return typing.cast(
             dbus_objects.object._DBusMethodTuple,
-            self._tree.get_element(path, interface, method)
+            self._method_tree.get_element(path, interface, method)
+        )
+
+    def get_property(self, path: str, interface: str, method: str) -> dbus_objects.object._DBusPropertyTuple:
+        '''
+        Fetches the property for given path, interface and property name
+
+        :param path: property path
+        :param interface: property interface
+        :param interface: property name
+        '''
+        return typing.cast(
+            dbus_objects.object._DBusPropertyTuple,
+            self._property_tree.get_element(path, interface, method)
         )
 
     def _register_element(
         self,
+        tree: _DBusTree,
         path: str,
         interface: str,
         name: str,
         data: Any,
         ignore_warn: bool,
     ) -> None:
-        interface_node = self._tree.get_interface_node(path, interface)
-        for node in self._tree.children(interface_node.identifier):
+        interface_node = tree.get_interface_node(path, interface)
+        for node in tree.children(interface_node.identifier):
             if node.tag == name:
                 if not ignore_warn:
                     warnings.warn(
@@ -220,7 +255,7 @@ class DBusServerBase():
                     )
                 break
         else:  # no break
-            self._tree.create_node(name, data=data, parent=interface_node)
+            tree.create_node(name, data=data, parent=interface_node)
 
     def _register_object(
         self,
@@ -236,14 +271,22 @@ class DBusServerBase():
         :param ignore_warn: ignores the duplicated object warning, you want to
                             set this when registering the standard interfaces
         '''
-        for method, descriptor in obj.get_dbus_methods():
-            if not descriptor.interface:
-                raise ValueError('Method has no DBus interface')
+        for method, method_descriptor in obj.get_dbus_methods():
             self._register_element(
+                self._method_tree,
                 path,
-                descriptor.interface,
-                descriptor.name,
-                (method, descriptor),
+                method_descriptor.interface,
+                method_descriptor.name,
+                (method, method_descriptor),
+                ignore_warn,
+            )
+        for getter, setter, property_descriptor in obj.get_dbus_properties():
+            self._register_element(
+                self._property_tree,
+                path,
+                property_descriptor.interface,
+                property_descriptor.name,
+                (getter, setter, property_descriptor),
                 ignore_warn,
             )
 
@@ -263,7 +306,7 @@ class DBusServerBase():
             self._register_object(path, _Peer(), ignore_warn=True)
             self._register_object(
                 path,
-                _Introspectable(path, self._tree),
+                _Introspectable(path, self._method_tree, self._property_tree),
                 ignore_warn=True
             )
             do = path != '/'

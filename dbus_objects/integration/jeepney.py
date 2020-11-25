@@ -117,7 +117,7 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         :param event: event which can be activated to stop listening
         '''
         self.__logger.debug('server topology:')
-        for line in self._tree.show(stdout=False).splitlines():
+        for line in self._method_tree.show(stdout=False).splitlines():
             self.__logger.debug('\t' + line)
         self.__logger.info('started listening...')
         try:

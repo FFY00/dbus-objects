@@ -60,12 +60,23 @@ def test_property(obj_properties):
     assert False  # pragma: no cover
 
 
-def test_xml(obj_methods):
+def test_method_xml(obj_methods):
     for _method, descriptor in obj_methods:
         if descriptor.name == 'ExampleMethod':
             assert ET.tostring(descriptor.xml).decode() == (
                 '<method name="ExampleMethod"><arg direction="out" '
                 f'type="{descriptor.signature[1]}" /></method>'
+            )
+            return
+    assert False  # pragma: no cover
+
+
+def test_property_xml(obj_properties):
+    for _getter, _setter, descriptor in obj_properties:
+        if descriptor.name == 'Prop':
+            assert ET.tostring(descriptor.xml).decode() == (
+                f'<property name="Prop" type="{descriptor.signature}" '
+                'access="readwrite" />'
             )
             return
     assert False  # pragma: no cover

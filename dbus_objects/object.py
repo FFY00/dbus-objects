@@ -49,28 +49,12 @@ class _DBusMethodBase():
             raise ValueError("Name hasn't been set yet")
         return self._name
 
-    @property
-    def xml(self) -> ET.Element:
-        if not self._input_signature or not self._output_signature:
-            raise ValueError("Signature hasn't been set yet")
-
-        xml = ET.Element('method', {'name': self.name})
-
-        for direction, signature, names in (
-            ('in', list(self._input_signature), self._input_signature.names or []),
-            ('out', list(self._output_signature), self._output_signature.names or []),
-        ):
-            for name, sig in itertools.zip_longest(names, signature):
-                data = {
-                    'direction': direction,
-                    'type': sig,
-                }
-                if name:
-                    data['name'] = name
-                ET.SubElement(xml, 'arg', data)
-
-        # TODO: export documentation
-        return xml
+    def register_interface(self, obj: Any) -> None:
+        if not self._interface_orig:
+            if obj.default_interface_root:
+                self._interface = '.'.join([obj.default_interface_root, obj._dbus_name])
+            else:
+                raise DBusObjectException(f'Missing interface in DBus method: {self.name}')
 
     def __set_name__(self, obj_type: Any, name: str) -> None:
         if not issubclass(obj_type, DBusObject):
@@ -108,11 +92,7 @@ class _DBusMethodBase():
         if obj is None:
             return self._func
         # construct interface from obj
-        if not self._interface_orig:
-            if obj.default_interface_root:
-                self._interface = '.'.join([obj.default_interface_root, obj._dbus_name])
-            else:
-                raise DBusObjectException(f'Missing interface in DBus method: {self.name}')
+        self.register_interface(obj)
         return types.MethodType(self._func, obj)
 
 
@@ -136,6 +116,29 @@ class _DBusMethod(_DBusMethodBase):
         if not self._input_signature or not self._output_signature:
             raise ValueError("Signature hasn't been set yet")
         return str(self._input_signature), str(self._output_signature)
+
+    @property
+    def xml(self) -> ET.Element:
+        if not self._input_signature or not self._output_signature:
+            raise ValueError("Signature hasn't been set yet")
+
+        xml = ET.Element('method', {'name': self.name})
+
+        for direction, signature, names in (
+            ('in', list(self._input_signature), self._input_signature.names or []),
+            ('out', list(self._output_signature), self._output_signature.names or []),
+        ):
+            for name, sig in itertools.zip_longest(names, signature):
+                data = {
+                    'direction': direction,
+                    'type': sig,
+                }
+                if name:
+                    data['name'] = name
+                ET.SubElement(xml, 'arg', data)
+
+        # TODO: export documentation
+        return xml
 
 
 class _DBusProperty(_DBusMethodBase):
@@ -163,6 +166,21 @@ class _DBusProperty(_DBusMethodBase):
         if not self._output_signature:
             raise ValueError("Signature hasn't been set yet")
         return str(self._output_signature)
+
+    @property
+    def xml(self) -> ET.Element:
+        if not self._input_signature or not self._output_signature:
+            raise ValueError("Signature hasn't been set yet")
+
+        xml = ET.Element('property', {
+            'name': self.name,
+            'type': self.signature,
+            'access': 'read' if not self._setter else 'readwrite',
+        })
+
+        # TODO: Support write-only properties
+        # TODO: Export documentation
+        return xml
 
     def __get__(self, obj: Any, obj_type: Any = None) -> Any:
         if obj is None:
@@ -287,6 +305,7 @@ class DBusObject():
         if not self._dbus_properties:
             return
         for property_name, descriptor in self._dbus_properties:
+            descriptor.register_interface(self)  # explicitely register the interface
             yield (
                 lambda: getattr(self, property_name),
                 lambda value: setattr(self, property_name, value),
