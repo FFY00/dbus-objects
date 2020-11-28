@@ -11,7 +11,7 @@ from typing import Any, Callable, Generator, List, Optional, Sequence, Tuple
 import dbus_objects.signature
 
 
-class _DBusMethodBase():
+class _DBusDescriptorBase():
     '''
     Base descriptor class that implements DBus interface objects
 
@@ -20,21 +20,12 @@ class _DBusMethodBase():
     '''
     def __init__(
         self,
-        func: Callable[..., Any],
         interface: Optional[str] = None,
         name: Optional[str] = None,
-        return_names: Optional[Sequence[str]] = None,
-        multiple_returns: bool = False,
     ) -> None:
-        self._func = func
         self._interface_orig = interface
         self._interface = self._interface_orig
-        self._given_name = name
-        self._name: Optional[str] = None
-        self._return_names = return_names or []
-        self._multiple_returns = multiple_returns
-        self._input_signature: Optional[dbus_objects.signature.DBusSignature] = None
-        self._output_signature: Optional[dbus_objects.signature.DBusSignature] = None
+        self._name = dbus_objects.signature.dbus_case(name) if name else None
         self._list_name: Optional[str] = None
 
     @property
@@ -64,13 +55,35 @@ class _DBusMethodBase():
         self._owner = obj_type
         self._descriptor_name = name
 
-        # get name
-        self._name = self._given_name
-        if not self._name:
-            self._name = self._func.__name__
-        self._name = dbus_objects.signature.dbus_case(self._name)
+        # get the method list for our type and initialize it if necessary
+        assert self._list_name
+        self._method_list = getattr(self._owner, self._list_name) or []
+        setattr(self._owner, self._list_name, self._method_list)
 
-        # get signatures
+        # add ourselves to the owner method list
+        self._method_list.append((self._descriptor_name, self))
+
+    def __get__(self, obj: Any, obj_type: Any = None) -> Any:
+        raise NotImplementedError('This should be implemented in a subclass')
+
+
+class _DBusMethodBase(_DBusDescriptorBase):
+    '''
+    Base descriptor class that implements DBus interface objects based on a method
+    '''
+    def __init__(
+        self,
+        func: Callable[..., Any],
+        interface: Optional[str] = None,
+        name: Optional[str] = None,
+        return_names: Optional[Sequence[str]] = None,
+        multiple_returns: bool = False,
+    ) -> None:
+        super().__init__(interface, name if name else func.__name__)
+        self._func = func
+        self._return_names = return_names or []
+        self._multiple_returns = multiple_returns
+
         self._input_signature = dbus_objects.signature.DBusSignature.from_parameters(
             self._func,
         )
@@ -79,14 +92,6 @@ class _DBusMethodBase():
             self._return_names,
             self._multiple_returns,
         )
-
-        # get the method list for our type and initialize it if necessary
-        assert self._list_name
-        self._method_list = getattr(self._owner, self._list_name) or []
-        setattr(self._owner, self._list_name, self._method_list)
-
-        # add ourselves to the owner method list
-        self._method_list.append((self._descriptor_name, self))
 
     def __get__(self, obj: Any, obj_type: Any = None) -> Any:
         if obj is None:
@@ -113,8 +118,6 @@ class _DBusMethod(_DBusMethodBase):
 
     @property
     def signature(self) -> Tuple[str, str]:
-        if not self._input_signature or not self._output_signature:
-            raise ValueError("Signature hasn't been set yet")
         return str(self._input_signature), str(self._output_signature)
 
     @property
@@ -163,8 +166,6 @@ class _DBusProperty(_DBusMethodBase):
 
     @property
     def signature(self) -> str:
-        if not self._output_signature:
-            raise ValueError("Signature hasn't been set yet")
         return str(self._output_signature)
 
     @property
