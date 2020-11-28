@@ -1,17 +1,15 @@
 # SPDX-License-Identifier: MIT
 
 import logging
-import threading
-
-from typing import Any, Optional
 
 import jeepney
-import jeepney.io.blocking
+import jeepney.io.trio
+import trio
 
 import dbus_objects.integration
 
 
-class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
+class TrioDBusServer(dbus_objects.integration.DBusServerBase):
     '''
     This class represents a DBus server. It should be instanciated.
     '''
@@ -25,22 +23,24 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         '''
         super().__init__(bus, name)
         self.__logger = logging.getLogger(self.__class__.__name__)
-        self.emit_signal_callback = self.emit_signal
 
-        self._dbus = jeepney.DBus()
-        self._conn_start()
+    # We can't have an async __init__ method, so we use this as an alternative.
+    @classmethod
+    async def new(cls, bus: str, name: str) -> 'TrioDBusServer':
+        inst = cls(bus, name)
+        await inst._conn_start()
+        return inst
 
-    def __del__(self) -> None:
-        self.close()  # pragma: no cover
-
-    def _conn_start(self) -> None:
+    async def _conn_start(self) -> None:
         '''
         Start DBus connection
         '''
-        self._conn = jeepney.io.blocking.open_dbus_connection(self._bus)
-        jeepney.io.blocking.Proxy(self._dbus, self._conn).RequestName(self._name)
+        self._conn = await jeepney.io.trio.open_dbus_connection(self._bus)
+        async with self._conn.router() as router:
+            bus_proxy = jeepney.io.trio.Proxy(jeepney.message_bus, router)
+            await bus_proxy.RequestName(self._name)
 
-    def _handle_msg(self, msg: jeepney.Message) -> None:
+    async def _handle_msg(self, msg: jeepney.Message) -> None:
         '''
         Handle message
 
@@ -99,43 +99,35 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
                         (return_args,) if return_args is not None else tuple()
                     )
 
-            self._conn.send(return_msg)
+            await self._conn.send(return_msg)
         else:
             self.__logger.info(f'Unhandled message: {msg} / {msg.header} / {msg.header.fields}')
 
-    def emit_signal(self, signal: dbus_objects.DBusSignal, path: str, body: Any) -> None:
-        emitter = jeepney.wrappers.DBusAddress(path, interface=signal.interface)
-        msg = jeepney.new_signal(emitter, signal.name, signal.signature, body)
-        self.__logger.debug(f'emitting signal: {signal.name} {body}')
-        self._conn.send_message(msg)
-
-    def close(self) -> None:
+    async def close(self) -> None:
         '''
         Close the DBus connection
         '''
-        self._conn.close()
+        await self._conn.aclose()
 
-    def listen(self, delay: float = 0.1, event: Optional[threading.Event] = None) -> None:
+    async def listen(self, delay: float = 0.01) -> None:
         '''
         Start listening and handling messages
 
         :param delay: loop delay
-        :param event: event which can be activated to stop listening
         '''
         self.__logger.debug('server topology:')
         for line in self._method_tree.show(stdout=False).splitlines():
             self.__logger.debug('\t' + line)
         self.__logger.info('started listening...')
         try:
-            while event is None or event.is_set():
+            while True:
                 try:
-                    msg = self._conn.receive(timeout=delay)
-                except TimeoutError:
-                    pass
+                    msg = await self._conn.receive()
                 except ConnectionResetError:
                     self.__logger.debug('connection reset abruptly, restarting...')
-                    self._conn_start()
+                    await self._conn_start()
                 else:
-                    self._handle_msg(msg)
+                    await self._handle_msg(msg)
+                await trio.sleep(delay)
         except KeyboardInterrupt:
             self.__logger.info('exiting...')
