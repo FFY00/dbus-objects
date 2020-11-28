@@ -23,7 +23,7 @@ jobs:
           restore-keys: arch-pkgs
 
       - name: Update system and install dependencies
-        run: pacman -Syu --noconfirm --noprogressbar --needed base-devel python-sphinx python-sphinx-autodoc-typehints python-pallets-sphinx-themes python-recommonmark git rsync
+        run: pacman -Syu --noconfirm --noprogressbar --needed base-devel python-sphinx python-sphinx-autodoc-typehints python-sphinx-furo git rsync
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -31,7 +31,7 @@ jobs:
       - name: Build documentation
         run: |
           cd docs
-          make
+          PYTHONPATH=.. sphinx-build -v -b dirhtml . build/html
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@releases/v3
