@@ -10,13 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-import os
-import sys
-
-from pallets_sphinx_themes import ProjectLink
-
-
-sys.path.insert(0, os.path.abspath('../..'))
+import dbus_objects
 
 
 # -- Project information -----------------------------------------------------
@@ -26,9 +20,9 @@ copyright = '2020, Filipe Laíns'
 author = 'Filipe Laíns'
 
 # The short X.Y version
-version = ''
+version = dbus_objects.__version__
 # The full version, including alpha/beta/rc tags
-release = ''
+release = dbus_objects.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -40,15 +34,10 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx_autodoc_typehints',
-    'pallets_sphinx_themes',
-    'recommonmark',
 ]
-
-# TODO: Use m2r to include the README.md instead of recommonmark. Currently waiting for a m2r release.
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
-    'jeepney': ('https://jeepney.readthedocs.io/en/latest/', None)
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -64,19 +53,10 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'flask'
-
-html_context = {
-    'project_links': [
-        ProjectLink('Source Code', 'https://github.com/FFY00/dbus-objects/'),
-        ProjectLink('Issue Tracker', 'https://github.com/FFY00/dbus-objects/issues/'),
-    ]
-}
-html_sidebars = {
-    'index': ['project.html', 'localtoc.html', 'searchbox.html'],
-}
+html_theme = 'furo'
+html_title = f'dbus-objects {version}'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named 'default.css' will overwrite the builtin 'default.css'.
-html_static_path = ['_static']
+# html_static_path = ['_static']

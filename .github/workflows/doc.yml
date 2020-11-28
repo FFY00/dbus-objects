@@ -23,7 +23,7 @@ jobs:
           restore-keys: arch-pkgs
 
       - name: Update system and install dependencies
-        run: pacman -Syu --noconfirm --noprogressbar --needed base-devel python-sphinx python-sphinx-autodoc-typehints python-pallets-sphinx-themes python-recommonmark git rsync
+        run: pacman -Syu --noconfirm --noprogressbar --needed base-devel python-sphinx python-sphinx-autodoc-typehints python-sphinx-furo git rsync
 
       - name: Checkout
         uses: actions/checkout@v2
