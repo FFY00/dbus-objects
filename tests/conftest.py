@@ -9,7 +9,7 @@ import pytest
 
 from dbus_objects.integration import DBusServerBase
 from dbus_objects.integration.jeepney import BlockingDBusServer
-from dbus_objects.object import DBusObject, dbus_method, dbus_property
+from dbus_objects.object import DBusObject, DBusSignal, dbus_method, dbus_property
 from dbus_objects.types import MultipleReturn
 
 
@@ -46,6 +46,27 @@ class ExampleObject(DBusObject):
         self._property = value
 
 
+class ExampleObjectWithSignal(DBusObject):
+    def __init__(self):
+        super().__init__(default_interface_root='com.example.object')
+
+    signal = DBusSignal(
+        value=int,
+        other_value=str,
+    )
+    signal2 = DBusSignal(float, int)
+
+
+class DummyServer(DBusServerBase):
+    def __init__(self, bus: str, name: str):
+        super().__init__(bus, name)
+        self.emit_signal_callback = self.emit_signal
+        self.emitted_signal = None
+
+    def emit_signal(self, signal, path, body):
+        self.emitted_signal = (signal.name, path, body)
+
+
 @pytest.fixture(scope='session')
 def obj():
     return ExampleObject()
@@ -59,6 +80,26 @@ def obj_methods(obj):
 @pytest.fixture()
 def obj_properties(obj):
     return obj.get_dbus_properties()
+
+
+@pytest.fixture()
+def signal_obj():
+    return ExampleObjectWithSignal()
+
+
+@pytest.fixture()
+def obj_signals(signal_obj):
+    return signal_obj.get_dbus_signals()
+
+
+@pytest.fixture()
+def signal_server(signal_obj):
+    server = DummyServer(
+        bus='SESSION',
+        name='io.github.ffy00.dbus-objects.tests'
+    )
+    server.register_object('/io/github/ffy00/dbus_objects/example', signal_obj)
+    yield server
 
 
 @pytest.fixture()
