@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import functools
 import itertools
+import logging
 import types
+import warnings
 import xml.etree.ElementTree as ET
 
-from typing import Any, Callable, Generator, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Generator, List, Optional, Sequence, Tuple, Type
 
+import dbus_objects.integration
 import dbus_objects.signature
 
 
@@ -203,7 +207,76 @@ class _DBusProperty(_DBusMethodBase):
         return self
 
 
-# TODO: _DBusSignal
+class DBusSignal(_DBusDescriptorBase):
+    '''
+    Descriptor class that implements a DBus signal
+    '''
+    def __init__(
+        self,
+        *types: Type[Any],
+        interface: Optional[str] = None,
+        name: Optional[str] = None,
+        **named_types: Type[Any],
+    ) -> None:
+        super().__init__(interface, name)
+        self.__logger = logging.getLogger(self.__class__.__name__)
+        self._list_name = '_dbus_signals'
+        if types and named_types:
+            # TODO: support mixed?
+            raise ValueError(
+                f'{self.__class__.__name__} receives either positional '
+                'arguments or keyword arguments as the signal types, '
+                'but not both.'
+            )
+        if named_types:
+            self._signature = dbus_objects.signature.DBusSignature(
+                [*named_types.values()],
+                [*named_types.keys()],
+            )
+        else:
+            self._signature = dbus_objects.signature.DBusSignature(types)
+
+    @property
+    def signature(self) -> str:
+        return str(self._signature)
+
+    @property
+    def xml(self) -> ET.Element:
+        xml = ET.Element('signal', {'name': self.name})
+
+        for name, sig in itertools.zip_longest(
+            self._signature.names or [],
+            list(self._signature),
+        ):
+            data = {
+                'type': sig,
+            }
+            if name:
+                data['name'] = name
+            ET.SubElement(xml, 'arg', data)
+
+        return xml
+
+    def emit_signal_callback(self, owner: Any) -> Callable[[Any], None]:
+        def emit_signal(*args: Any) -> None:
+            for callback in owner._emit_signal_callbacks:
+                try:
+                    # TODO: export python signature (__signature__)
+                    callback(self, body=args)
+                except Exception as e:
+                    self.__logger.info(
+                        'An exception ocurred when try to emit signal '
+                        f'{self.name} {args}: {e}'
+                    )
+        return emit_signal
+
+    def __set_name__(self, obj_type: Any, name: str) -> None:
+        super().__set_name__(obj_type, name)
+        self._name = dbus_objects.signature.dbus_case(name)
+
+    def __get__(self, obj: Any, obj_type: Any = None) -> Any:
+        self.register_interface(obj)  # construct interface from obj
+        return self.emit_signal_callback(obj)
 
 
 def dbus_method(
@@ -281,6 +354,7 @@ class DBusObject():
         :param name: DBus object name
         '''
         self.is_dbus_object = True
+        self._emit_signal_callbacks: List[Callable[[DBusSignal, str, Any], None]] = []
         self._dbus_name = dbus_objects.signature.dbus_case(
             name if name else type(self).__name__
         )
@@ -313,6 +387,24 @@ class DBusObject():
                 descriptor,
             )
 
+    def register_server(self, server: dbus_objects.integration.DBusServerBase, path: str) -> None:
+        if not self._dbus_signals:
+            return
+        if not server.emit_signal_callback:
+            warnings.warn(DBusObjectWarning(
+                f"Object '{self.dbus_name}' emits signals but the server "
+                f"'{server.__class__.__name__}' does not support this. "
+                'Signals will not be emitted.'
+            ))
+            return
+        self._emit_signal_callbacks.append(
+            functools.partial(server.emit_signal_callback, path=path),
+        )
+
 
 class DBusObjectException(Exception):
+    pass
+
+
+class DBusObjectWarning(Warning):
     pass
