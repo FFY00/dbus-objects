@@ -22,7 +22,7 @@ class DBusSignature():
     def __init__(
         self,
         annotations: Sequence[Type[Any]],
-        names: Optional[Sequence[str]]
+        names: Optional[Sequence[str]] = None,
     ) -> None:
         self._list = self._get_signatures(annotations)
         self._names = names
