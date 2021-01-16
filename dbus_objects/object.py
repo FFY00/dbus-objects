@@ -335,6 +335,9 @@ _DBusPropertyTuple = Tuple[
     _DBusProperty
 ]  # getter, setter, descriptor
 
+_DBusSignalTupleInternal = Tuple[str, DBusSignal]  # method name, signal descriptor
+_DBusSignalTuple = Tuple[Callable[..., Any], DBusSignal]  # method, signal descriptor
+
 
 class DBusObject():
     '''
@@ -345,6 +348,7 @@ class DBusObject():
     # type -> method name list
     _dbus_methods: Optional[List[_DBusMethodTupleInternal]] = None
     _dbus_properties: Optional[List[_DBusPropertyTupleInternal]] = None
+    _dbus_signals: Optional[List[_DBusSignalTupleInternal]] = None
 
     def __init__(self, name: Optional[str] = None, default_interface_root: Optional[str] = None):
         '''
@@ -386,6 +390,15 @@ class DBusObject():
                 lambda value: setattr(self, property_name, value),
                 descriptor,
             )
+
+    def get_dbus_signals(self) -> Generator[_DBusSignalTuple, _DBusSignalTuple, None]:
+        '''
+        Generator that provides the DBus signals
+        '''
+        if not self._dbus_signals:
+            return
+        for signal_name, descriptor in self._dbus_signals:
+            yield getattr(self, signal_name), descriptor
 
     def register_server(self, server: dbus_objects.integration.DBusServerBase, path: str) -> None:
         if not self._dbus_signals:
