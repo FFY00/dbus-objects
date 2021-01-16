@@ -299,6 +299,7 @@ class DBusServerBase():
         :param obj: object
         '''
         self.__logger.debug(f'registering {obj.dbus_name} in {path}')
+        obj.register_server(self, path)
         # TODO: validate paths, interfaces and method names
         self._register_object(path, obj)
         self._register_object(path, _Properties(obj), ignore_warn=True)
