@@ -6,7 +6,7 @@
     <meta name="generator" content="sphinx-3.4.3, furo 2020.11.10.beta15"/>
         <title>Home - dbus-objects 0.0.1</title>
       <link id="pygments_dark_css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css" href="_static/pygments_dark.css" />
-    <link rel="stylesheet" href="_static/styles/furo.css?state=9b76929d00661e68406d13d2">
+    <link rel="stylesheet" href="_static/styles/furo.css?state=08744c9b7888e2df496b8b36">
     <link rel="stylesheet" href="_static/pygments.css">
     <link media="(prefers-color-scheme: dark)" rel="stylesheet" href="_static/pygments_dark.css">
     
@@ -41,7 +41,7 @@
     <script id="documentation_options" data-url_root="#" src="_static/documentation_options.js"></script><script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
-    <script src="_static/scripts/main.js?state=9b76929d00661e68406d13d2"></script></head>
+    <script src="_static/scripts/main.js?state=08744c9b7888e2df496b8b36"></script></head>
   <body dir="">
     
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
@@ -181,6 +181,9 @@
     <span class="nd">@name</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name_updated</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="n">name_updated</span> <span class="o">=</span> <span class="n">dbus_objects</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">DBusSignal</span><span class="p">(</span><span class="n">new_name</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
 
 
 <span class="n">server</span> <span class="o">=</span> <span class="n">dbus_objects</span><span class="o">.</span><span class="n">integration</span><span class="o">.</span><span class="n">jeepney</span><span class="o">.</span><span class="n">BlockingDBusServer</span><span class="p">(</span>
