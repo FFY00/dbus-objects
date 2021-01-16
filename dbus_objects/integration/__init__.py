@@ -48,6 +48,7 @@ class _Introspectable(dbus_objects.object.DBusObject):
 
     @dbus_objects.object.dbus_method(return_names=('xml',))
     def introspect(self) -> str:  # noqa: C901
+        #xml = ET.Element('node', {'xmlns:doc': 'http://www.freedesktop.org/dbus/1.0/doc.dtd'}) # See: FFY00/dbus-objects#20.
         xml = ET.Element('node')
         interfaces: Dict[str, ET.Element] = {}
 
