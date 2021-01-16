@@ -3,7 +3,7 @@
 import logging
 import threading
 
-from typing import Optional
+from typing import Any, Optional
 
 import jeepney
 import jeepney.io.blocking
@@ -25,6 +25,7 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         '''
         super().__init__(bus, name)
         self.__logger = logging.getLogger(self.__class__.__name__)
+        self.emit_signal_callback = self.emit_signal
 
         self._dbus = jeepney.DBus()
         self._conn_start()
@@ -101,6 +102,12 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
             self._conn.send_message(return_msg)
         else:
             self.__logger.info(f'Unhandled message: {msg} / {msg.header} / {msg.header.fields}')
+
+    def emit_signal(self, signal: dbus_objects.object.DBusSignal, path: str, body: Any) -> None:
+        emitter = jeepney.wrappers.DBusAddress(path, interface=signal.interface)
+        msg = jeepney.new_signal(emitter, signal.name, signal.signature, body)
+        self.__logger.debug(f'emitting signal: {signal.name} {body}')
+        self._conn.send_message(msg)
 
     def close(self) -> None:
         '''
