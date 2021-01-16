@@ -108,7 +108,7 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         '''
         self._conn.close()
 
-    def listen(self, delay: float = 0.01, event: Optional[threading.Event] = None) -> None:
+    def listen(self, delay: float = 0.1, event: Optional[threading.Event] = None) -> None:
         '''
         Start listening and handling messages
 
