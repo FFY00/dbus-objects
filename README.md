@@ -65,7 +65,7 @@ class ExampleObject(dbus_objects.object.DBusObject):
 
 server = dbus_objects.integration.jeepney.BlockingDBusServer(
     bus='SESSION',
-    name='io.github.ffy00.dbus-objects'
+    name='io.github.ffy00.dbus-objects',
 )
 server.register_object('/io/github/ffy00/dbus_objects/example', ExampleObject())
 
