@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 import pytest
 import xmldiff
 
-from dbus_objects.object import DBusObject, DBusObjectException, dbus_method
+from dbus_objects.object import DBusObject, DBusObjectException, DBusObjectWarning, dbus_method
 
 
 def test_dbus_object(obj):
@@ -61,6 +61,25 @@ def test_property(obj_properties):
     assert False  # pragma: no cover
 
 
+def test_signal(obj_signals):
+    for _callback, descriptor in obj_signals:
+        if descriptor.name == 'Signal':
+            assert descriptor.signature == 'is'
+            assert list(descriptor.signature) == ['i', 's']
+            return
+    assert False  # pragma: no cover
+
+
+def test_signal_call(signal_server, signal_obj):
+    assert not signal_server.emitted_signal
+    signal_obj.signal(30, 'test')
+    assert signal_server.emitted_signal == (
+        'Signal',
+        '/io/github/ffy00/dbus_objects/example',
+        (30, 'test'),
+    )
+
+
 def test_method_xml(obj_methods):
     for _method, descriptor in obj_methods:
         if descriptor.name == 'ExampleMethod':
@@ -87,3 +106,26 @@ def test_property_xml(obj_properties):
             )
             return
     assert False  # pragma: no cover
+
+
+def test_signal_xml(obj_signals):
+    for _method, descriptor in obj_signals:
+        if descriptor.name == 'Signal':
+            print(ET.tostring(descriptor.xml))
+            assert not xmldiff.main.diff_texts(
+                ET.tostring(descriptor.xml).decode(),
+                (
+                    '<signal name="Signal"><arg type="i" name="value" />'
+                    '<arg type="s" name="other_value" /></signal>'
+                )
+            )
+            return
+    assert False  # pragma: no cover
+
+
+def test_register_unsupported_signal_warning(base_server, signal_obj):
+    with pytest.warns(DBusObjectWarning, match=(
+        "Object 'ExampleObjectWithSignal' emits signals but the server "
+        "'DBusServerBase' does not support this. Signals will not be emitted."
+    )):
+        base_server.register_object('/io/github/ffy00/dbus_objects/example', signal_obj)
