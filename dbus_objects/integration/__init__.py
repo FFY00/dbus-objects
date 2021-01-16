@@ -33,6 +33,7 @@ class _Introspectable(dbus_objects.object.DBusObject):
         path: str,
         method_tree: Optional[treelib.Tree] = None,
         property_tree: Optional[treelib.Tree] = None,
+        signal_tree: Optional[treelib.Tree] = None,
     ):
         '''
         :param path: path where the onject is being resgistered
@@ -45,6 +46,7 @@ class _Introspectable(dbus_objects.object.DBusObject):
         self._path = path
         self._method_tree = method_tree
         self._property_tree = property_tree
+        self._signal_tree = signal_tree
 
     @dbus_objects.object.dbus_method(return_names=('xml',))
     def introspect(self) -> str:  # noqa: C901
@@ -69,6 +71,12 @@ class _Introspectable(dbus_objects.object.DBusObject):
                 interface = get_interface(node.tag)
                 for property_node in self._property_tree.children(node.identifier):
                     getter, setter, descriptor = property_node.data
+                    interface.append(descriptor.xml)
+        if self._signal_tree and self._path in self._signal_tree:
+            for node in self._signal_tree.children(self._path):
+                interface = get_interface(node.tag)
+                for signal_node in self._signal_tree.children(node.identifier):
+                    signal, descriptor = signal_node.data
                     interface.append(descriptor.xml)
 
         # add nodes (subpaths)
@@ -201,6 +209,7 @@ class DBusServerBase():
         self._name = name
         self._method_tree = _DBusTree()
         self._property_tree = _DBusTree()
+        self._signal_tree = _DBusTree()
         # XXX mypy does not support optional class methods
         self.emit_signal_callback: Optional[Callable[[dbus_objects.object.DBusSignal, str, Any], None]] = None
 
@@ -292,6 +301,15 @@ class DBusServerBase():
                 (getter, setter, property_descriptor),
                 ignore_warn,
             )
+        for signal, signal_descriptor in obj.get_dbus_signals():
+            self._register_element(
+                self._signal_tree,
+                path,
+                signal_descriptor.interface,
+                signal_descriptor.name,
+                (signal, signal_descriptor),
+                ignore_warn,
+            )
 
     def register_object(self, path: str, obj: dbus_objects.object.DBusObject) -> None:
         '''
@@ -310,8 +328,13 @@ class DBusServerBase():
             self._register_object(path, _Peer(), ignore_warn=True)
             self._register_object(
                 path,
-                _Introspectable(path, self._method_tree, self._property_tree),
-                ignore_warn=True
+                _Introspectable(
+                    path,
+                    self._method_tree,
+                    self._property_tree,
+                    self._signal_tree,
+                ),
+                ignore_warn=True,
             )
             do = path != '/'
             path = os.path.dirname(path)
