@@ -113,13 +113,14 @@ def base_server(obj):
 
 
 @pytest.fixture()
-def jeepney_one_time_server(obj):
+def jeepney_one_time_server(obj, signal_obj):
     server = BlockingDBusServer(
         bus='SESSION',
         name='io.github.ffy00.dbus-objects.tests'
     )
 
     server.register_object('/io/github/ffy00/dbus_objects/example', obj)
+    server.register_object('/io/github/ffy00/dbus_objects/example_signal', signal_obj)
 
     # start server
     run = multiprocessing.Event()
