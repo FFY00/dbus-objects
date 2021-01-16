@@ -46,6 +46,9 @@ class ExampleObject(dbus_objects.object.DBusObject):
     @name.setter
     def name(self, value: str):
         self._name = value
+        self.name_updated(value)
+
+    name_updated = dbus_objects.object.DBusSignal(new_name=str)
 
 
 server = dbus_objects.integration.jeepney.BlockingDBusServer(

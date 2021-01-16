@@ -58,6 +58,9 @@ class ExampleObject(dbus_objects.object.DBusObject):
     @name.setter
     def name(self, value: str):
         self._name = value
+        self.name_updated(value)
+
+    name_updated = dbus_objects.object.DBusSignal(new_name=str)
 
 
 server = dbus_objects.integration.jeepney.BlockingDBusServer(
@@ -120,43 +123,57 @@ And, for eg., the following DBus introspection XML for `/io/github/ffy00/dbus_ob
 <!DOCTYPE node PUBLIC
 "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd" >
-<node xmlns:doc="http://www.freedesktop.org/dbus/1.0/doc.dtd">
-    <interface name="io.github.ffy00.dbus_objects.example.ExampleObject">
-        <method name="GetBets">
-            <arg direction="out" type="ai" />
-        </method>
-        <method name="Lotery">
-            <arg direction="out" type="i" />
-        </method>
-        <method name="Ping">
-            <arg direction="out" type="s" />
-        </method>
-        <method name="Print">
-            <arg direction="in" type="s" name="msg" />
-        </method>
-        <method name="SaveBet">
-            <arg direction="in" type="i" name="number" />
-        </method>
-        <method name="Sum">
-            <arg direction="in" type="i" name="a" />
-            <arg direction="in" type="i" name="b" />
-            <arg direction="out" type="i" />
-        </method>
-    </interface>
-    <interface name="org.freedesktop.DBus.Properties">
-        <method name="GetAll">
-            <arg direction="in" type="s" name="interface_name" />
-            <arg direction="out" type="a{sv}" />
-        </method>
-    </interface>
-    <interface name="org.freedesktop.DBus.Introspectable">
-        <method name="Introspect">
-            <arg direction="out" type="s" name="xml" />
-        </method>
-    </interface>
-    <interface name="org.freedesktop.DBus.Peer">
-        <method name="Ping" />
-    </interface>
+<node>
+	<interface name="io.github.ffy00.dbus_objects.example.ExampleObject">
+		<method name="Ping">
+			<arg direction="out" type="s" />
+		</method>
+		<method name="Print">
+			<arg direction="in" type="s" name="msg" />
+		</method>
+		<method name="Sum">
+			<arg direction="in" type="i" name="a" />
+			<arg direction="in" type="i" name="b" />
+			<arg direction="out" type="i" />
+		</method>
+		<method name="SaveBet">
+			<arg direction="in" type="i" name="number" />
+		</method>
+		<method name="GetBets">
+			<arg direction="out" type="ai" />
+		</method>
+		<method name="Lotery">
+			<arg direction="out" type="i" />
+		</method>
+		<property name="Name" type="s" access="readwrite" />
+		<signal name="NameUpdated">
+			<arg type="s" name="new_name" />
+		</signal>
+	</interface>
+	<interface name="org.freedesktop.DBus.Properties">
+		<method name="Get">
+			<arg direction="in" type="s" name="interface_name" />
+			<arg direction="in" type="s" name="property_name" />
+			<arg direction="out" type="v" />
+		</method>
+		<method name="Set">
+			<arg direction="in" type="s" name="interface_name" />
+			<arg direction="in" type="s" name="property_name" />
+			<arg direction="in" type="v" name="value" />
+		</method>
+		<method name="GetAll">
+			<arg direction="in" type="s" name="interface_name" />
+			<arg direction="out" type="a{sv}" />
+		</method>
+	</interface>
+	<interface name="org.freedesktop.DBus.Peer">
+		<method name="Ping" />
+	</interface>
+	<interface name="org.freedesktop.DBus.Introspectable">
+		<method name="Introspect">
+			<arg direction="out" type="s" name="xml" />
+		</method>
+	</interface>
 </node>
 ```
 
