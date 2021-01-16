@@ -2,7 +2,6 @@
 
 import logging
 import threading
-import time
 
 from typing import Optional
 
@@ -123,12 +122,13 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         try:
             while event is None or event.is_set():
                 try:
-                    msg = self._conn.receive()
+                    msg = self._conn.receive(timeout=delay)
+                except TimeoutError:
+                    pass
                 except ConnectionResetError:
                     self.__logger.debug('connection reset abruptly, restarting...')
                     self._conn_start()
                 else:
                     self._handle_msg(msg)
-                time.sleep(delay)
         except KeyboardInterrupt:
             self.__logger.info('exiting...')
