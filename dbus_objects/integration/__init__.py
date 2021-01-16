@@ -7,7 +7,7 @@ import typing
 import warnings
 import xml.etree.ElementTree as ET
 
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import treelib
 
@@ -201,6 +201,8 @@ class DBusServerBase():
         self._name = name
         self._method_tree = _DBusTree()
         self._property_tree = _DBusTree()
+        # XXX mypy does not support optional class methods
+        self.emit_signal_callback: Optional[Callable[[dbus_objects.object.DBusSignal, str, Any], None]] = None
 
     @property
     def name(self) -> str:
