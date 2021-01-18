@@ -35,6 +35,15 @@ from dbus_objects.signature import DBusSignature, dbus_case
         (typing.Dict[int, str], 'a{is}'),
         (typing.Dict[str, typing.Tuple[int, int]], 'a{s(ii)}'),
         (typing.Dict[str, typing.Dict[str, str]], 'a{sa{ss}}'),
+        (typing.Tuple[
+            dbus_objects.types.Byte,
+            dbus_objects.types.UInt16,
+            dbus_objects.types.UInt32,
+            dbus_objects.types.UInt64,
+            dbus_objects.types.Int16,
+            dbus_objects.types.Int32,
+            dbus_objects.types.Int64,
+        ], '(yqutnix)'),
     ],
 )
 def test_signature(subtests, types, signature):

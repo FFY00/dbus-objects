@@ -12,10 +12,10 @@ import dbus_objects.object
 import dbus_objects.types
 
 
-if sys.version_info < (3, 8):
-    import typing_extensions
-    typing.get_args = typing_extensions.get_args
-    typing.get_origin = typing_extensions.get_origin
+if sys.version_info < (3, 9):
+    import typing_extensions as _typing
+else:
+    _typing = typing
 
 
 class DBusSignature():
@@ -78,7 +78,7 @@ class DBusSignature():
         if not ret or ret is sig.empty:
             annotations = []
         elif multiple_returns:
-            annotations = list(typing.get_args(ret))
+            annotations = list(_typing.get_args(ret))
         elif ret:
             annotations = [ret]
 
@@ -91,11 +91,20 @@ class DBusSignature():
 
         :param typ: python type to convert
         '''
-        attr_class: type = typ if not typing.get_origin(typ) else typing.get_origin(typ)  # type: ignore
-        args = typing.get_args(typ)
+        attr_class: type = typ if not _typing.get_origin(typ) else _typing.get_origin(typ)  # type: ignore
+        args = _typing.get_args(typ)
         # TODO: Variants, File Descriptors, DBus Signature
-        if attr_class is dbus_objects.types.Variant:
-            return 'v'
+        if attr_class is typing.cast(Type[Any], _typing.Annotated):
+            if args[0] == int:
+                if args[1] in ('y', 'q', 'u', 't', 'n', 'i', 'x'):
+                    assert isinstance(args[1], str)
+                    return args[1]
+                else:
+                    raise dbus_objects.object.DBusObjectException(
+                        f'Unknown int-based DBus signature type: {args[1]}'
+                    )
+            elif typ is dbus_objects.types.Variant:
+                return 'v'
         elif attr_class is list:
             return 'a' + cls._type_signature(args[0])
         elif attr_class is dict:
@@ -106,20 +115,8 @@ class DBusSignature():
             return 's'
         elif attr_class is float:
             return 'd'
-        elif attr_class is int or attr_class is dbus_objects.types.Int32:
+        elif attr_class is int:
             return 'i'
-        elif attr_class is dbus_objects.types.Byte:
-            return 'y'
-        elif attr_class is dbus_objects.types.UInt16:
-            return 'q'
-        elif attr_class is dbus_objects.types.UInt32:
-            return 'u'
-        elif attr_class is dbus_objects.types.UInt64:
-            return 't'
-        elif attr_class is dbus_objects.types.Int16:
-            return 'n'
-        elif attr_class is dbus_objects.types.Int64:
-            return 'x'
         elif attr_class is dbus_objects.object.DBusObject:
             return 'o'
 

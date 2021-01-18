@@ -6,22 +6,21 @@ import sys
 import typing
 
 
-if sys.version_info < (3, 8):
-    import typing_extensions
-    typing.Literal = typing_extensions.Literal
-    typing.Protocol = typing_extensions.Protocol
+if sys.version_info < (3, 9):
+    import typing_extensions as _typing
+else:
+    _typing = typing
 
 
-Byte = typing.TypeVar('Byte', int, int)
-UInt16 = typing.TypeVar('UInt16', int, int)
-UInt32 = typing.TypeVar('UInt32', int, int)
-UInt64 = typing.TypeVar('UInt64', int, int)
-Int16 = typing.TypeVar('Int16', int, int)
-Int32 = typing.TypeVar('Int32', int, int)
-Int64 = typing.TypeVar('Int64', int, int)
-Signature = typing.TypeVar('Signature', str, bytes)
-
-_Variant = typing.Tuple[str, typing.Any]
-Variant = typing.TypeVar('Variant', _Variant, _Variant)
+# flake8/pygflakes is mad: https://github.com/PyCQA/pyflakes/issues/594
+Byte = _typing.Annotated[int, 'y']  # noqa: F821
+UInt16 = _typing.Annotated[int, 'q']  # noqa: F821
+UInt32 = _typing.Annotated[int, 'u']  # noqa: F821
+UInt64 = _typing.Annotated[int, 't']  # noqa: F821
+Int16 = _typing.Annotated[int, 'n']  # noqa: F821
+Int32 = _typing.Annotated[int, 'i']  # noqa: F821
+Int64 = _typing.Annotated[int, 'x']  # noqa: F821
+Signature = _typing.Annotated[str, 'g']  # noqa: F821
+Variant = _typing.Annotated[typing.Tuple[str, typing.Any], 'v']  # noqa: F821
 
 MultipleReturn = typing.Tuple  # type: ignore
