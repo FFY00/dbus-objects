@@ -7,7 +7,7 @@ import jeepney
 import jeepney.io.blocking
 import pytest
 
-from dbus_objects import DBusObject, DBusSignal, dbus_method, dbus_property
+from dbus_objects import DBusObject, custom_dbus_signal, dbus_method, dbus_property, dbus_signal
 from dbus_objects.integration import DBusServerBase
 from dbus_objects.integration.jeepney import BlockingDBusServer
 from dbus_objects.types import MultipleReturn
@@ -50,11 +50,16 @@ class ExampleObjectWithSignal(DBusObject):
     def __init__(self):
         super().__init__(default_interface_root='com.example.object')
 
-    signal = DBusSignal(
+    signal = dbus_signal(
         value=int,
         other_value=str,
     )
-    signal2 = DBusSignal(float, int)
+    signal2 = dbus_signal(float, int)
+    custom_signal = custom_dbus_signal(name='SpecialSignal')(int, int)
+    custom_signal2 = custom_dbus_signal(name='SpecialSignal2')(
+        name=str,
+        age=int,
+    )
 
 
 class DummyServer(DBusServerBase):

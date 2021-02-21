@@ -60,7 +60,7 @@ class ExampleObject(dbus_objects.DBusObject):
         self._name = value
         self.name_updated(value)
 
-    name_updated = dbus_objects.DBusSignal(new_name=str)
+    name_updated = dbus_objects.dbus_signal(new_name=str)
 
 
 server = dbus_objects.integration.jeepney.BlockingDBusServer(

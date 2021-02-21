@@ -13,7 +13,7 @@ import typing
 import warnings
 import xml.etree.ElementTree as ET
 
-from typing import Any, Callable, Generator, List, Optional, Sequence, Tuple, Type
+from typing import Any, Callable, Dict, Generator, List, Optional, Sequence, Tuple, Type
 
 import dbus_objects.signature
 
@@ -214,16 +214,16 @@ class _DBusProperty(_DBusMethodBase):
         return self
 
 
-class DBusSignal(_DBusDescriptorBase):
+class _DBusSignal(_DBusDescriptorBase):
     '''
     Descriptor class that implements a DBus signal
     '''
     def __init__(
         self,
-        *types: Type[Any],
+        types: Tuple[Type[Any], ...],
+        named_types: Dict[str, Type[Any]],
         interface: Optional[str] = None,
         name: Optional[str] = None,
-        **named_types: Type[Any],
     ) -> None:
         super().__init__(interface, name)
         self.__logger = logging.getLogger(self.__class__.__name__)
@@ -333,6 +333,31 @@ def dbus_property(
     return decorator
 
 
+def dbus_signal(*types: Type[Any], **named_types: Type[Any]) -> _DBusSignal:
+    '''
+    This method returns a DBus signal
+    '''
+    return _DBusSignal(types=types, named_types=named_types)
+
+
+def custom_dbus_signal(
+    *types: Type[Any],
+    interface: Optional[str] = None,
+    name: Optional[str] = None,
+) -> Callable[..., _DBusSignal]:
+    '''
+    This method returns a custom DBus signal constructor
+    '''
+    def constructor(*types: Type[Any], **named_types: Type[Any]) -> _DBusSignal:
+        return _DBusSignal(
+            types=types,
+            named_types=named_types,
+            interface=interface,
+            name=name
+        )
+    return constructor
+
+
 _DBusMethodTupleInternal = Tuple[str, _DBusMethod]  # method name, method descriptor
 _DBusMethodTuple = Tuple[Callable[..., Any], _DBusMethod]  # method, method descriptor
 
@@ -343,8 +368,8 @@ _DBusPropertyTuple = Tuple[
     _DBusProperty
 ]  # getter, setter, descriptor
 
-_DBusSignalTupleInternal = Tuple[str, DBusSignal]  # method name, signal descriptor
-_DBusSignalTuple = Tuple[Callable[..., Any], DBusSignal]  # method, signal descriptor
+_DBusSignalTupleInternal = Tuple[str, _DBusSignal]  # method name, signal descriptor
+_DBusSignalTuple = Tuple[Callable[..., Any], _DBusSignal]  # method, signal descriptor
 
 
 class DBusObject():
@@ -366,7 +391,7 @@ class DBusObject():
         :param name: DBus object name
         '''
         self.is_dbus_object = True
-        self._emit_signal_callbacks: List[Callable[[DBusSignal, str, Any], None]] = []
+        self._emit_signal_callbacks: List[Callable[[_DBusSignal, str, Any], None]] = []
         self._dbus_name = dbus_objects.signature.dbus_case(
             name if name else type(self).__name__
         )

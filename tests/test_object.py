@@ -80,6 +80,16 @@ def test_signal_call(signal_server, signal_obj):
     )
 
 
+def test_custom_signal_call(signal_server, signal_obj):
+    assert not signal_server.emitted_signal
+    signal_obj.custom_signal(1, 2)
+    assert signal_server.emitted_signal == (
+        'SpecialSignal',
+        '/io/github/ffy00/dbus_objects/example',
+        (1, 2),
+    )
+
+
 def test_method_xml(obj_methods):
     for _method, descriptor in obj_methods:
         if descriptor.name == 'ExampleMethod':
