@@ -279,7 +279,8 @@ class DBusSignal(_DBusDescriptorBase):
 
     def __set_name__(self, obj_type: Any, name: str) -> None:
         super().__set_name__(obj_type, name)
-        self._name = dbus_objects.signature.dbus_case(name)
+        if not self._name:
+            self._name = dbus_objects.signature.dbus_case(name)
 
     def __get__(self, obj: Any, obj_type: Any = None) -> Any:
         self.register_interface(obj)  # construct interface from obj
