@@ -7,9 +7,9 @@ import jeepney
 import jeepney.io.blocking
 import pytest
 
+from dbus_objects import DBusObject, DBusSignal, dbus_method, dbus_property
 from dbus_objects.integration import DBusServerBase
 from dbus_objects.integration.jeepney import BlockingDBusServer
-from dbus_objects.object import DBusObject, DBusSignal, dbus_method, dbus_property
 from dbus_objects.types import MultipleReturn
 
 

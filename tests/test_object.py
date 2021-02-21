@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 import pytest
 import xmldiff
 
-from dbus_objects.object import DBusObject, DBusObjectException, DBusObjectWarning, dbus_method
+from dbus_objects import DBusObject, DBusObjectException, DBusObjectWarning, dbus_method
 
 
 def test_dbus_object(obj):

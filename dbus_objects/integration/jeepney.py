@@ -103,7 +103,7 @@ class BlockingDBusServer(dbus_objects.integration.DBusServerBase):
         else:
             self.__logger.info(f'Unhandled message: {msg} / {msg.header} / {msg.header.fields}')
 
-    def emit_signal(self, signal: dbus_objects.object.DBusSignal, path: str, body: Any) -> None:
+    def emit_signal(self, signal: dbus_objects.DBusSignal, path: str, body: Any) -> None:
         emitter = jeepney.wrappers.DBusAddress(path, interface=signal.interface)
         msg = jeepney.new_signal(emitter, signal.name, signal.signature, body)
         self.__logger.debug(f'emitting signal: {signal.name} {body}')
