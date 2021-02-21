@@ -6,7 +6,7 @@ import pytest
 
 import dbus_objects.types
 
-from dbus_objects.object import DBusObject, DBusObjectException
+from dbus_objects import DBusObject, DBusObjectException
 from dbus_objects.signature import DBusSignature, dbus_case
 
 

@@ -8,7 +8,7 @@ import typing
 
 from typing import Any, Callable, Iterable, Iterator, List, Optional, Sequence, Type
 
-import dbus_objects.object
+import dbus_objects
 import dbus_objects.types
 
 
@@ -55,7 +55,7 @@ class DBusSignature():
 
         for name, value in args.items():
             if value.annotation is value.empty:
-                raise dbus_objects.object.DBusObjectException(
+                raise dbus_objects.DBusObjectException(
                     f'Argument is missing a type annotation: {name} ({func})'
                 )
 
@@ -100,7 +100,7 @@ class DBusSignature():
                     assert isinstance(args[1], str)
                     return args[1]
                 else:
-                    raise dbus_objects.object.DBusObjectException(
+                    raise dbus_objects.DBusObjectException(
                         f'Unknown int-based DBus signature type: {args[1]}'
                     )
             elif typ is dbus_objects.types.Variant:
@@ -117,10 +117,10 @@ class DBusSignature():
             return 'd'
         elif attr_class is int:
             return 'i'
-        elif attr_class is dbus_objects.object.DBusObject:
+        elif attr_class is dbus_objects.DBusObject:
             return 'o'
 
-        raise dbus_objects.object.DBusObjectException(f'Can\'t convert \'{typ}\' to a DBus signature')
+        raise dbus_objects.DBusObjectException(f'Can\'t convert \'{typ}\' to a DBus signature')
 
     @classmethod
     def _get_signatures(cls, args: Iterable[type]) -> List[str]:

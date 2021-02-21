@@ -6,11 +6,6 @@ API Documentation
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: dbus_objects.object
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 .. automodule:: dbus_objects.signature
    :members:
    :undoc-members:

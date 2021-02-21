@@ -11,14 +11,14 @@ from typing import Any, Callable, Dict, Optional
 
 import treelib
 
-import dbus_objects.object
+import dbus_objects
 import dbus_objects.types
 
 
 # These few following classes implement the standard interfaces
 
 
-class _Introspectable(dbus_objects.object.DBusObject):
+class _Introspectable(dbus_objects.DBusObject):
     '''
     https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-introspectable
     '''
@@ -48,7 +48,7 @@ class _Introspectable(dbus_objects.object.DBusObject):
         self._property_tree = property_tree
         self._signal_tree = signal_tree
 
-    @dbus_objects.object.dbus_method(return_names=('xml',))
+    @dbus_objects.dbus_method(return_names=('xml',))
     def introspect(self) -> str:  # noqa: C901
         # xml = ET.Element('node', {'xmlns:doc': 'http://www.freedesktop.org/dbus/1.0/doc.dtd'}) # See: FFY00/dbus-objects#20.
         xml = ET.Element('node')
@@ -90,7 +90,7 @@ class _Introspectable(dbus_objects.object.DBusObject):
         return self._XML_DOCTYPE + ET.tostring(xml).decode()
 
 
-class _Peer(dbus_objects.object.DBusObject):
+class _Peer(dbus_objects.DBusObject):
     '''
     https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-peer
     '''
@@ -100,35 +100,35 @@ class _Peer(dbus_objects.object.DBusObject):
             default_interface_root='org.freedesktop.DBus',
         )
 
-    @dbus_objects.object.dbus_method()
+    @dbus_objects.dbus_method()
     def ping(self) -> None:
         return
 
     # TODO: GetMachineId() - how to reliably get the ID?
 
 
-class _Properties(dbus_objects.object.DBusObject):
+class _Properties(dbus_objects.DBusObject):
     '''
     https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces-properties
     '''
-    def __init__(self, obj: dbus_objects.object.DBusObject) -> None:
+    def __init__(self, obj: dbus_objects.DBusObject) -> None:
         super().__init__(
             name='Properties',
             default_interface_root='org.freedesktop.DBus',
         )
         self._obj = obj
 
-    @dbus_objects.object.dbus_method()
+    @dbus_objects.dbus_method()
     def get(self, interface_name: str, property_name: str) -> dbus_objects.types.Variant:
         # TODO: interface == ''
         return '', None
 
-    @dbus_objects.object.dbus_method(name='set')
+    @dbus_objects.dbus_method(name='set')
     def set_(self, interface_name: str, property_name: str, value: dbus_objects.types.Variant) -> None:
         # TODO: interface == ''
         pass
 
-    @dbus_objects.object.dbus_method()
+    @dbus_objects.dbus_method()
     def get_all(self, interface_name: str) -> Dict[str, dbus_objects.types.Variant]:
         return {
             descriptor.name: (descriptor.signature, getter())
@@ -211,7 +211,7 @@ class DBusServerBase():
         self._property_tree = _DBusTree()
         self._signal_tree = _DBusTree()
         # XXX mypy does not support optional class methods
-        self.emit_signal_callback: Optional[Callable[[dbus_objects.object.DBusSignal, str, Any], None]] = None
+        self.emit_signal_callback: Optional[Callable[[dbus_objects.DBusSignal, str, Any], None]] = None
 
     @property
     def name(self) -> str:
@@ -220,7 +220,7 @@ class DBusServerBase():
         '''
         return self._name
 
-    def get_method(self, path: str, interface: str, method: str) -> dbus_objects.object._DBusMethodTuple:
+    def get_method(self, path: str, interface: str, method: str) -> dbus_objects._DBusMethodTuple:
         '''
         Fetches the method for given path, interface and method name
 
@@ -229,11 +229,11 @@ class DBusServerBase():
         :param interface: method name
         '''
         return typing.cast(
-            dbus_objects.object._DBusMethodTuple,
+            dbus_objects._DBusMethodTuple,
             self._method_tree.get_element(path, interface, method)
         )
 
-    def get_property(self, path: str, interface: str, method: str) -> dbus_objects.object._DBusPropertyTuple:
+    def get_property(self, path: str, interface: str, method: str) -> dbus_objects._DBusPropertyTuple:
         '''
         Fetches the property for given path, interface and property name
 
@@ -242,7 +242,7 @@ class DBusServerBase():
         :param interface: property name
         '''
         return typing.cast(
-            dbus_objects.object._DBusPropertyTuple,
+            dbus_objects._DBusPropertyTuple,
             self._property_tree.get_element(path, interface, method)
         )
 
@@ -272,7 +272,7 @@ class DBusServerBase():
     def _register_object(
         self,
         path: str,
-        obj: dbus_objects.object.DBusObject,
+        obj: dbus_objects.DBusObject,
         ignore_warn: bool = False
     ) -> None:
         '''
@@ -311,7 +311,7 @@ class DBusServerBase():
                 ignore_warn,
             )
 
-    def register_object(self, path: str, obj: dbus_objects.object.DBusObject) -> None:
+    def register_object(self, path: str, obj: dbus_objects.DBusObject) -> None:
         '''
         Registers the object into the server
 
