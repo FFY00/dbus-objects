@@ -35,7 +35,7 @@ class ExampleObject(DBusObject):
 
     @dbus_method(multiple_returns=True)
     def multiple(self, msg: str) -> MultipleReturn[int, int]:
-        print(msg)  # pragma: no cover
+        return 1, 2  # pragma: no cover
 
     @dbus_property()
     def prop(self) -> str:
