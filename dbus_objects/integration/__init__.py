@@ -211,7 +211,7 @@ class DBusServerBase():
         self._property_tree = _DBusTree()
         self._signal_tree = _DBusTree()
         # XXX mypy does not support optional class methods
-        self.emit_signal_callback: Optional[Callable[[dbus_objects.DBusSignal, str, Any], None]] = None
+        self.emit_signal_callback: Optional[Callable[[dbus_objects._DBusSignal, str, Any], None]] = None
 
     @property
     def name(self) -> str:

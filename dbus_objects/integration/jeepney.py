@@ -88,7 +88,7 @@ class _JeepneyServerBase(dbus_objects.integration.DBusServerBase):
             self._logger.info(f'Unhandled message: {msg} / {msg.header} / {msg.header.fields}')
             return None
 
-    def _get_signal_msg(self, signal: dbus_objects.DBusSignal, path: str, body: Any) -> jeepney.Message:
+    def _get_signal_msg(self, signal: dbus_objects._DBusSignal, path: str, body: Any) -> jeepney.Message:
         emitter = jeepney.wrappers.DBusAddress(path, interface=signal.interface)
         msg = jeepney.new_signal(emitter, signal.name, signal.signature, body)
         return msg
@@ -134,7 +134,7 @@ class BlockingDBusServer(_JeepneyServerBase):
         if return_msg:
             self._conn.send(return_msg)
 
-    def emit_signal(self, signal: dbus_objects.DBusSignal, path: str, body: Any) -> None:
+    def emit_signal(self, signal: dbus_objects._DBusSignal, path: str, body: Any) -> None:
         self._logger.debug(f'emitting signal: {signal.name} {body}')
         self._conn.send_message(self._get_signal_msg(signal, path, body))
 
@@ -212,7 +212,7 @@ class TrioDBusServer(_JeepneyServerBase):
         if return_msg:
             await self._conn.send(return_msg)
 
-    async def emit_signal(self, signal: dbus_objects.DBusSignal, path: str, body: Any) -> None:
+    async def emit_signal(self, signal: dbus_objects._DBusSignal, path: str, body: Any) -> None:
         self._logger.debug(f'emitting signal: {signal.name} {body}')
         await self._conn.send_message(self._get_signal_msg(signal, path, body))
 
