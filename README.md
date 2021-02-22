@@ -8,7 +8,7 @@
 DBus objects implementation on top of the Python type system.
 
 Integrations:
-  - [jeepney](https://gitlab.com/takluyver/jeepney)
+  - [jeepney](https://gitlab.com/takluyver/jeepney) (blocking IO and [trio](https://github.com/python-trio/trio) backends)
 
 ```python
 import random
