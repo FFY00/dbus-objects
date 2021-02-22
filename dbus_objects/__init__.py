@@ -18,7 +18,7 @@ from typing import Any, Callable, Generator, List, Optional, Sequence, Tuple, Ty
 import dbus_objects.signature
 
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     import dbus_objects.integration
 
 
