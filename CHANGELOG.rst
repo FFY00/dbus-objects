@@ -2,6 +2,15 @@
 Changelog
 +++++++++
 
+
+0.0.2 (26/02/2021)
+==================
+
+- Added support for DBus signals
+- Add support for the Jeepney Trio backend
+- Improve documentation
+
+
 0.0.1 (28/11/2020)
 ==================
 
