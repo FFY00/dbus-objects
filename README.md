@@ -7,6 +7,10 @@
 
 DBus objects implementation on top of the Python type system.
 
+Object declarations will be introspected and the equivalent DBus signature
+automatically generated. This makes it incredible easy to develop DBus object
+providers ("servers"), especially if you are already writing typed Python!
+
 Integrations:
   - [jeepney](https://gitlab.com/takluyver/jeepney) (blocking IO and [trio](https://github.com/python-trio/trio) backends)
 
