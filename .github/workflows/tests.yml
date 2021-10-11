@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: [3.7, 3.8, 3.9]
+        python: ["3.7", "3.8", "3.9"]
 
     steps:
       - name: Checkout
@@ -25,12 +25,9 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-
       - name: Install nox
         run: |
-            pip install nox
+            pipx install nox
             nox --version
 
       - name: Run tests
