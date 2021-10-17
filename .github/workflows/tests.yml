@@ -43,3 +43,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           env_vars: PYTHON
+          files: .nox/*/coverage-*.xml
