@@ -240,3 +240,72 @@ class TrioDBusServer(_JeepneyServerBase):
                     await self._handle_msg(msg)
         except KeyboardInterrupt:
             self._logger.info('exiting...')
+
+
+class AsyncIODBusServer(_JeepneyServerBase):
+    def __init__(self, bus: str, name: str) -> None:
+        '''
+        Async DBus server built on top of Jeepney+asyncio
+
+        :param bus: DBus bus (hint: usually SESSION or SYSTEM)
+        :param name: DBus name
+        '''
+        super().__init__(bus, name)
+        self._logger = logging.getLogger(self.__class__.__name__)
+        # TODO: support signals
+        # self.emit_signal_callback = self.emit_signal
+
+    # We can't have an async __init__ method, so we use this as an alternative.
+    @classmethod
+    async def new(cls, bus: str, name: str) -> AsyncIODBusServer:
+        inst = cls(bus, name)
+        await inst._conn_start()
+        return inst
+
+    async def _conn_start(self) -> None:
+        '''
+        Start DBus connection
+        '''
+        import jeepney.io.asyncio
+
+        self._conn = await jeepney.io.asyncio.open_dbus_connection(self._bus)
+        async with jeepney.io.asyncio.DBusRouter(self._conn) as router:
+            bus_proxy = jeepney.io.asyncio.Proxy(jeepney.message_bus, router)
+            await bus_proxy.RequestName(self._name)
+
+    async def _handle_msg(self, msg: jeepney.Message) -> None:
+        '''
+        Handle message
+
+        :param msg: message to handle
+        '''
+        return_msg = self._jeepney_handle_msg(msg)
+        if return_msg:
+            await self._conn.send(return_msg)
+
+    async def emit_signal(self, signal: dbus_objects._DBusSignal, path: str, body: Any) -> None:
+        self._logger.debug(f'emitting signal: {signal.name} {body}')
+        await self._conn.send_message(self._get_signal_msg(signal, path, body))
+
+    async def close(self) -> None:
+        '''
+        Close the DBus connection
+        '''
+        await self._conn.close()
+
+    async def listen(self) -> None:
+        '''
+        Start listening and handling messages
+        '''
+        self._log_topology()
+        try:
+            while True:
+                try:
+                    msg = await self._conn.receive()
+                except ConnectionResetError:
+                    self._logger.debug('connection reset abruptly, restarting...')
+                    await self._conn_start()
+                else:
+                    await self._handle_msg(msg)
+        except KeyboardInterrupt:
+            self._logger.info('exiting...')
